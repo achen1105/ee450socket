@@ -1,34 +1,41 @@
+#include <iostream>
+#include <errno.h>
+#include <string.h>
+#include <netdb.h>
+#include <sys/types.h>
+#include <netinet/in.h>
+#include <sys/socket.h>
+#include <arpa/inet.h>
+#include <sys/wait.h>
+
 using namespace std;
 
-#include <iostream>
-#include <unistd.h>
-#include <sys/types.h> 
-#include <sys/socket.h>
-#include <netinet/in.h>
 
-int main()
+int main(int argc, char** argv)
 {
-    // int sockfd = socket(domain, type, protocol)
-    int socketM = socket(AF_INET, SOCK_DGRAM, 0);
+    // 5.1
+    struct addrinfo hints, *res;
+    int sockfd;
 
-    if (socketM > 0)
-    {
-        cout << "The main server is up and running." << endl;
-    }
-    else
-    {
-        cout << "The main server could not run." << endl;
-    }
+    // first, load up address structs with getaddrinfo():
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
+    hints.ai_socktype = SOCK_STREAM;
+    // hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
 
-    // int bind (int socket, local address, address length);
-    //int bindSocketM = bind(socketM, SOCK_DGRAM, 0);
+    /**
+    int getaddrinfo(const char *node,     // e.g. "www.example.com" or IP
+                    const char *service,  // e.g. "http" or port number
+                    const struct addrinfo *hints,
+                    struct addrinfo **res);
+    */
+    getaddrinfo("127.0.0.1", "24421", &hints, &res);
 
-    if (socketM > 0)
-    {
-        cout << "The main server is up and running." << endl;
-    }
-    else
-    {
-        cout << "The main server could not run." << endl;
-    }
+    // make a socket:
+    // int socket(int domain, int type, int protocol); 
+    sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+    // bind it to the port we passed in to getaddrinfo():
+    // int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
+    bind(sockfd, res->ai_addr, res->ai_addrlen);
 }
