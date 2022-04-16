@@ -1,0 +1,47 @@
+/**
+    int main(int argc, char** argv)
+    {
+        
+        
+    }
+    // 5.1
+    struct sockaddr_storage their_addr;
+    socklen_t addr_size;
+    struct addrinfo hints, *res;
+    int sockfd, new_fd;
+
+    // first, load up address structs with getaddrinfo():
+    memset(&hints, 0, sizeof hints);
+    hints.ai_family = AF_UNSPEC;  // use IPv4 or IPv6, whichever
+    hints.ai_socktype = SOCK_STREAM;
+    // hints.ai_flags = AI_PASSIVE;     // fill in my IP for me
+
+    
+    //int getaddrinfo(const char *node,     // e.g. "www.example.com" or IP
+    //               const char *service,  // e.g. "http" or port number
+    //                const struct addrinfo *hints,
+    //                struct addrinfo **res);
+    
+    getaddrinfo("127.0.0.1", "24421", &hints, &res);
+
+    // make a socket:
+    // int socket(int domain, int type, int protocol); 
+    sockfd = socket(res->ai_family, res->ai_socktype, res->ai_protocol);
+
+    // bind it to the port we passed in to getaddrinfo():
+    // int bind(int sockfd, struct sockaddr *my_addr, int addrlen);
+    bind(sockfd, res->ai_addr, res->ai_addrlen);
+
+    // backlog - the number of connections allowed on the incoming queue
+    //int listen(int sockfd, int backlog); 
+    listen(sockfd, 5);
+
+    cout << "The main server is up and running." << endl;
+
+    // // now accept an incoming connection:
+    // int accept(int sockfd, struct sockaddr *addr, socklen_t *addrlen); 
+    addr_size = sizeof their_addr;
+    new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &addr_size);
+
+    // ready to communicate on socket descriptor new_fd!
+    */
