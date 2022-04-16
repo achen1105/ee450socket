@@ -18,6 +18,9 @@
 #define PORT2 "25421"  // the TCP port users will be connecting to
 #define BACKLOG 10 // how many pending connections queue will hold
 
+#define PORT3 "26421"  // the TCP port users will be connecting to
+#define BACKLOG3 10 // how many pending connections queue will hold
+
 // get sockaddr, IPv4 or IPv6:
 void *get_in_addr(struct sockaddr *sa)
 {
@@ -210,4 +213,9 @@ int main(void)
 {
     //firstUDP();
     secondTCP();
+}
+
+int checkWallet()
+{
+
 }

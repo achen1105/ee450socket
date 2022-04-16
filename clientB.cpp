@@ -38,11 +38,6 @@ int main(int argc, char *argv[])
     int rv;
     char s[INET6_ADDRSTRLEN];
 
-    if (argc != 2) {
-        fprintf(stderr,"usage: client username1\n");
-        exit(1);
-    }
-
     memset(&hints, 0, sizeof hints);
     hints.ai_family = AF_UNSPEC;
     hints.ai_socktype = SOCK_STREAM;
@@ -87,7 +82,8 @@ int main(int argc, char *argv[])
 
     inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
             s, sizeof s);
-    printf("client: connecting to %s\n", s);
+    //printf("client: connecting to %s\n", s);
+    printf("The client B is up and running.");
 
     freeaddrinfo(servinfo); // all done with this structure
 
@@ -99,7 +95,19 @@ int main(int argc, char *argv[])
     buf[numbytes] = '\0';
 
     printf("client: received '%s'\n",buf);
-    printf("The current balance of argv[1] is __ alicoins.");
+
+    if (argc == 2)
+    {
+        printf("The current balance of '%s' is __ alicoins.\n", argv[1]);
+    }
+    else if (argc == 4)
+    {
+        printf("txcoins operation\n");
+    }
+    else{
+        fprintf(stderr,"usage: client username1 or client username1 username2 transfer-amount\n");
+        exit(1);
+    }
 
     close(sockfd);
 

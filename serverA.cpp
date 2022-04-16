@@ -10,7 +10,9 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
-
+#include <cstring>
+#include <fstream>
+#include <iostream>
 
 // Adapted from 6.1 A Simple Stream Server
 /*
@@ -30,6 +32,27 @@ void *get_in_addr(struct sockaddr *sa)
     }
 
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+// https://www.cplusplus.com/doc/tutorial/files/
+std::string getBlock1()
+{
+    std::string line;
+    std::string output = "";
+    std::ifstream myfile ("block1.txt");
+    if (myfile.is_open())
+    {
+        while ( getline(myfile,line) )
+        {
+            std::cout << line << '\n';
+            output = output + line;
+        }
+        myfile.close();
+    }
+
+    else std::cout << "Unable to open file"; 
+
+    return output;
 }
 
 int main(void)
@@ -78,6 +101,7 @@ int main(void)
     freeaddrinfo(servinfo);
 
     printf("The ServerA is up and running using UDP on port 21421.\n");
+    getBlock1();
 
     addr_len = sizeof their_addr;
     if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
