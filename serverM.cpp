@@ -10,6 +10,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <iostream>
 
 #define MYNODE "127.0.0.1" // local host hardcoded
 #define MYPORT "24421"    // the UDP port users will be connecting to
@@ -60,7 +61,7 @@ int createSockets()
     memset(&hintsUDP, 0, sizeof hintsUDP);
     hintsUDP.ai_family = AF_INET6; // set to AF_INET to use IPv4
     hintsUDP.ai_socktype = SOCK_DGRAM;
-    //hints.ai_flags = AI_PASSIVE; // use my IP
+    //hintsUDP.ai_flags = O_NONBLOCK;
 
     // check errors in address info
     if ((rvUDP = getaddrinfo(MYNODE, MYPORT, &hintsUDP, &servinfoUDP)) != 0) {
@@ -101,7 +102,7 @@ int createSockets()
     struct addrinfo hintsTCP1, *servinfoTCP1, *pTCP1;
     struct sockaddr_storage their_addrTCP1; // connector's address information
     socklen_t sin_sizeTCP1;
-    struct sigaction saTCP1;
+    // struct sigaction saTCP1;
     int yesTCP1=1;
     char sTCP1[INET6_ADDRSTRLEN];
     int rvTCP1;
@@ -151,6 +152,7 @@ int createSockets()
         exit(1);
     }
 
+    /**
     saTCP1.sa_handler = sigchld_handler; // reap all dead processes
     sigemptyset(&saTCP1.sa_mask);
     saTCP1.sa_flags = SA_RESTART;
@@ -158,23 +160,32 @@ int createSockets()
         perror("sigaction");
         exit(1);
     }
+    */
 
     // successful three sockets
     printf("The main server is up and running.\n");
     //printf("server: waiting for connections...\n");
 
     // 7.3 and https://stackoverflow.com/questions/15560336/listen-to-multiple-ports-from-one-server
-    fd_set master;
-    FD_SET(sockfdUDP, &master);
-    FD_SET(sockfdTCP1, &master);
-    fd_set read_fds = master; // copy
-    int fd_max = sockfdTCP1;
+    
 
     // keeps UDP/TCP running
     while(1)
     {
+        fd_set master;
+        FD_ZERO(&master);
+        FD_SET(sockfdUDP, &master);
+        FD_SET(sockfdTCP1, &master);
+        int fd_max = sockfdUDP;
+        if (sockfdTCP1 > sockfdUDP)
+        {
+            fd_max = sockfdTCP1;
+        }
+
+        fd_set read_fds = master; // copy
         if (select(fd_max+1, &read_fds, NULL, NULL, NULL) == -1) 
         {
+            std::cout<< fd_max << std::endl;
             perror("select");
             exit(4);
         }
