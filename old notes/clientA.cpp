@@ -30,6 +30,8 @@ void *get_in_addr(struct sockaddr *sa)
     return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+
+
 int main(int argc, char *argv[])
 {
     int sockfd, numbytes;  
@@ -87,17 +89,24 @@ int main(int argc, char *argv[])
 
     freeaddrinfo(servinfo); // all done with this structure
 
+    /**
     if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
         perror("recv");
         exit(1);
     }
+    */
 
-    buf[numbytes] = '\0';
+    //buf[numbytes] = '\0';
 
-    printf("client: received '%s'\n",buf);
+    //printf("client: received '%s'\n",buf);
 
+    // CHECK WALLET
     if (argc == 2)
-    {
+    {   if (send(sockfd, argv[1], strlen(argv[1]), 0) == -1)
+        {
+            perror("send"); 
+        }
+        printf("'%s' sent a balance enquiry request to the main server.\n", argv[1]);
         printf("The current balance of '%s' is __ alicoins.\n", argv[1]);
     }
     else if (argc == 4)
