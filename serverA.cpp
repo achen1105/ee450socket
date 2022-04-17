@@ -104,7 +104,9 @@ int main(void)
     printf("The ServerA is up and running using UDP on port 21421.\n");
     getBlock1();
 
-    // port and address for server M
+    while (1)
+    {
+        // port and address for server M
      struct addrinfo *servinfo2;
      if ((rv = getaddrinfo(MYNODE, "24421", NULL, &servinfo2)) != 0) {
         fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
@@ -117,12 +119,18 @@ int main(void)
         exit(1);
     }
 
-    freeaddrinfo(servinfo2);
-
     printf("talker: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    if ((numbytes = recvfrom(sockfd, buf, MAXBUFLEN-1 , 0,
+    servinfo2->ai_addr, &servinfo2->ai_addrlen)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+
+    freeaddrinfo(servinfo2);
     close(sockfd);
-
-    //close(sockfd);
-
+    }
+    
     return 0;
 }
