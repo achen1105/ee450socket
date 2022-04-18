@@ -36,10 +36,13 @@ int main(int argc, char *argv[])
 	int rv;
 	char s[INET6_ADDRSTRLEN];
 
+    // WILL BE HANDLED LATER
+    /**
 	if (argc != 2) {
 	    fprintf(stderr,"usage: client <username1>\n");
 	    exit(1);
 	}
+    */
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
@@ -75,29 +78,60 @@ int main(int argc, char *argv[])
 
 	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
 			s, sizeof s);
-	printf("client: connecting to %s\n", s);
+	// printf("client: connecting to %s\n", s);
 
 	freeaddrinfo(servinfo); // all done with this structure
+
+    printf("The client A is up and running.\n"); // our own "client connecting to"
     // CLIENT DONE WITH ALL CONNECTING HERE
 
     // START TALKING HERE
 
-    // SEND MESSAGE TO SERVER
-    if (send(sockfd, "clientA send command to serverM", strlen("clientA send command to serverM"), 0) == -1)
+    // CHECK WALLET
+    if (argc == 2)
     {
-        perror("send");
+        // SEND MESSAGE TO SERVER
+        if (send(sockfd, "clientA send CHECKWALLET to serverM", strlen("clientA send CHECKWALLET to serverM"), 0) == -1)
+        {
+            perror("send");
+        }
+        printf("clientA: send '%s'\n", "clientA send CHECKWALLET to serverM");
+
+        // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0'; // ending null char
+        printf("clientA: received '%s'\n",buf);
     }
-    printf("clientA: send '%s'\n", "clientA send command to serverM");
+    // TXCOINS
+    else if (argc == 4)
+    {
+        // SEND MESSAGE TO SERVER
+        if (send(sockfd, "clientA send TXCOINS to serverM", strlen("clientA send TXCOINS to serverM"), 0) == -1)
+        {
+            perror("send");
+        }
+        printf("clientA: send '%s'\n", "clientA send TXCOINS to serverM");
 
-    // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE
-	if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
-	    perror("recv");
+        // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE SO EXIT
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0'; // ending null char
+        printf("clientA: received '%s'\n",buf);
+    }
+    else
+    {
+        fprintf(stderr,"clientA usage: ./clientA <username1> or ./clientA <username1> <username2> <transfer amount>\n");
 	    exit(1);
-	}
-	buf[numbytes] = '\0'; // ending null char
-	printf("clientA: received '%s'\n",buf);
+    }
 
-    // DONE TALKING so close the one socket
+    // DONE TALKING HERE
+    
+    // close the one socket
 	close(sockfd);
 
 	return 0;
