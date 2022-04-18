@@ -95,7 +95,7 @@ int main(int argc, char *argv[])
         {
             perror("send");
         }
-        printf("clientA: send '%s'\n", "clientA send CHECKWALLET to serverM");
+        printf("%s sent a balance enquiry request to the main server.\n", argv[1]);
 
         // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE
         if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
+        printf("The current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1]);
     }
     // TXCOINS
     else if (argc == 4)
@@ -113,7 +114,7 @@ int main(int argc, char *argv[])
         {
             perror("send");
         }
-        printf("clientA: send '%s'\n", "clientA send TXCOINS to serverM");
+        printf("%s has requested to transfer %s coins to %s.\n", argv[1], argv[3], argv[2]);
 
         // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE SO EXIT
         if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
@@ -122,6 +123,8 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
+        // successful TXCOINS
+        printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
     }
     else
     {
@@ -135,9 +138,4 @@ int main(int argc, char *argv[])
 	close(sockfd);
 
 	return 0;
-}
-
-void checkWalletClient()
-{
-
 }
