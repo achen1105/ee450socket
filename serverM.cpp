@@ -141,11 +141,11 @@ int main(void)
             printf("serverM: received '%s'\n",buf);
 
             // SEND REQUESTED INFO MESSAGE TO CLIENT
-			if (send(new_fd, "serverM send req info to clientA", strlen("serverM send req info to clientA"), 0) == -1)
+			if (send(new_fd, "10 serverM send req info to clientA", strlen("10 serverM send req info to clientA"), 0) == -1)
             {
                 perror("send");
             }
-             printf("serverM: send '%s'\n", "serverM send req info to clientA");
+             printf("serverM: send '%s'\n", "10 serverM send req info to clientA");
 
             // DONE TALKING HERE
 			close(new_fd);

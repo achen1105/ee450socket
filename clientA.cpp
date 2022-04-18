@@ -87,8 +87,27 @@ int main(int argc, char *argv[])
 
     // START TALKING HERE
 
+    // TXLIST
+    if (argc == 2 && strcmp(argv[1],"TXLIST") == 0)
+    {
+        // SEND MESSAGE TO SERVER
+        if (send(sockfd, "clientA send TXLIST to serverM", strlen("clientA send TXLIST to serverM"), 0) == -1)
+        {
+            perror("send");
+        }
+        printf("%s sent a TXLIST request to the main server.\n", argv[1]);
+
+        // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0'; // ending null char
+        printf("clientA: received '%s'\n",buf);
+        printf("TXLIST is generated.");
+    }
     // CHECK WALLET
-    if (argc == 2)
+    else if (argc == 2)
     {
         // SEND MESSAGE TO SERVER
         if (send(sockfd, "clientA send CHECKWALLET to serverM", strlen("clientA send CHECKWALLET to serverM"), 0) == -1)
@@ -105,6 +124,25 @@ int main(int argc, char *argv[])
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
         printf("The current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1]);
+    }
+    // STATS
+    else if (argc == 3 && strcmp(argv[2],"stats") == 0)
+    {
+        // SEND MESSAGE TO SERVER
+        if (send(sockfd, "clientA send STATS to serverM", strlen("clientA send STATS to serverM"), 0) == -1)
+        {
+            perror("send");
+        }
+        printf("%s sent a statistics balance enquiry request to the main server.\n", argv[1]);
+
+        // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE
+        if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
+            perror("recv");
+            exit(1);
+        }
+        buf[numbytes] = '\0'; // ending null char
+        printf("clientA: received '%s'\n",buf);
+        printf("%s statistics are the following.:”Rank--Username--NumofTransacions--Total\n", argv[1]);
     }
     // TXCOINS
     else if (argc == 4)
@@ -123,8 +161,28 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
-        // successful TXCOINS
-        printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
+
+        // TXCOINS SCENARIOS
+        if (buf[0]=='1' && buf[1] == '0') // code 1 for txcoins, 0 for successful txcoins
+        {
+            // successful TXCOINS
+            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
+        }
+        else if (buf[0]=='1' && buf[1] == '1') // code 1 for txcoins, 1 for insufficient balance
+        {
+            // insufficient balance
+            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
+        }
+        else if (buf[0]=='1' && buf[1] == '2') // code 1 for txcoins, 1 client not in network
+        {
+            // 1 not in network
+            printf("Unable to proceed with the transaction as <SENDER_USERNAME/RECEIVER_USERNAME> is not part of the network.");
+        }
+        else if (buf[0]=='1' && buf[1] == '3') // code 1 for txcoins, 2 clients not in network
+        {
+            // 2 not in network
+            printf("Unable to proceed with the transaction as %s and %s are not part of the network.", argv[1], argv[2]);
+        }
     }
     else
     {
