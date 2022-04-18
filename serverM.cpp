@@ -15,7 +15,8 @@
 #include <sys/wait.h>
 #include <signal.h>
 
-#define PORT "25421"  // the port users will be connecting to
+#define PORTCA "25421"  // the port users will be connecting to for client A
+#define PORTCB "26421"  // the port users will be connecting to for client A
 
 #define BACKLOG 10	 // how many pending connections queue will hold
 
@@ -63,7 +64,7 @@ int main(void)
 	hints.ai_socktype = SOCK_STREAM;
 	//hints.ai_flags = AI_PASSIVE; // use my IP
 
-	if ((rv = getaddrinfo("127.0.0.1", PORT, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo("127.0.0.1", PORTCA, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
@@ -112,9 +113,77 @@ int main(void)
 	}
     // END MAIN TCP SOCKET 1, NOW LISTENING
 
+    // CREATE TCP SOCKET 2 FOR LISTENING FOR CLIENT B
+	int sockfd2, new_fd2;  // listen on sock_fd2, new connection on new_fd2
+	struct addrinfo hints2, *servinfo2, *p2;
+	struct sockaddr_storage their_addr2; // connector's address information
+	socklen_t sin_size2;
+	struct sigaction sa2;
+	int yes2=1;
+	char s2[INET6_ADDRSTRLEN];
+	int rv2;
+    // for receiving messages from TCP sockets
+    int numbytes2; // check message length
+    char buf2[MAXDATASIZE]; // store message
+
+	memset(&hints2, 0, sizeof hints2);
+	hints2.ai_family = AF_UNSPEC;
+	hints2.ai_socktype = SOCK_STREAM;
+	//hints.ai_flags = AI_PASSIVE; // use my IP
+
+	if ((rv2 = getaddrinfo("127.0.0.1", PORTCB, &hints2, &servinfo2)) != 0) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv2));
+		return 1;
+	}
+
+	// loop through all the results and bind to the first we can
+	for(p2 = servinfo2; p2 != NULL; p2 = p2->ai_next) {
+		if ((sockfd2 = socket(p2->ai_family, p2->ai_socktype,
+				p2->ai_protocol)) == -1) {
+			perror("serverM: socket");
+			continue;
+		}
+
+		if (setsockopt(sockfd2, SOL_SOCKET, SO_REUSEADDR, &yes2,
+				sizeof(int)) == -1) {
+			perror("setsockopt");
+			exit(1);
+		}
+
+		if (bind(sockfd2, p2->ai_addr, p2->ai_addrlen) == -1) {
+			close(sockfd2);
+			perror("server: bind");
+			continue;
+		}
+
+		break;
+	}
+
+	freeaddrinfo(servinfo2); // all done with this structure
+
+	if (p2 == NULL)  {
+		fprintf(stderr, "serverM: failed to bind\n");
+		exit(1);
+	}
+
+	if (listen(sockfd2, BACKLOG) == -1) {
+		perror("listen");
+		exit(1);
+	}
+
+	sa2.sa_handler = sigchld_handler; // reap all dead processes
+	sigemptyset(&sa2.sa_mask);
+	sa2.sa_flags = SA_RESTART;
+	if (sigaction(SIGCHLD, &sa2, NULL) == -1) {
+		perror("sigaction");
+		exit(1);
+	}
+    // END MAIN TCP SOCKET 2, NOW LISTENING
+
 	printf("server: waiting for connections...\n");
 
 	while(1) {  // main accept() loop
+        // LISTEN FOR CLIENT A
 		sin_size = sizeof their_addr;
 		new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
 		if (new_fd == -1) {
@@ -152,6 +221,47 @@ int main(void)
 			exit(0);
 		}
 		close(new_fd);  // parent doesn't need this
+        // END TCP ACCEPT FOR CLIENT A
+
+        // LISTEN FOR CLIENT B
+        sin_size2 = sizeof their_addr2;
+		new_fd2 = accept(sockfd2, (struct sockaddr *)&their_addr2, &sin_size2);
+		if (new_fd2 == -1) {
+			perror("accept");
+			continue;
+		}
+
+		inet_ntop(their_addr2.ss_family,
+			get_in_addr((struct sockaddr *)&their_addr2),
+			s2, sizeof s2);
+		printf("server: got connection from %s\n", s2);
+
+		if (!fork()) { // this is the child process
+			close(sockfd2); // child doesn't need the listener
+            
+            // START TALKING HERE
+
+            // WAIT FOR CLIENT COMMAND
+            if ((numbytes2 = recv(new_fd2, buf2, MAXDATASIZE-1, 0)) == -1) 
+            {
+                perror("recv");
+	        }
+            buf2[numbytes2] = '\0'; // ending null char
+            printf("serverM: received '%s'\n",buf2);
+
+            // SEND REQUESTED INFO MESSAGE TO CLIENT
+			if (send(new_fd2, "10 serverM send req info to clientB", strlen("10 serverM send req info to clientB"), 0) == -1)
+            {
+                perror("send");
+            }
+             printf("serverM: send '%s'\n", "10 serverM send req info to clientB");
+
+            // DONE TALKING HERE
+			close(new_fd2);
+			exit(0);
+		}
+		close(new_fd2);  // parent doesn't need this
+        // END TCP ACCEPT TO CLIENT B
 	}
 
 	return 0;
