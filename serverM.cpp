@@ -17,10 +17,10 @@
 
 #define PORTCA "25421"  // the port users will be connecting to for client A
 #define PORTCB "26421"  // the port users will be connecting to for client A
+#define PORTSM "24421" // UDP port for server M 
 
-#define BACKLOG 10	 // how many pending connections queue will hold
-
-#define MAXDATASIZE 100 // max number of bytes we can get at once (from TCP clients)
+#define BACKLOG 10	 // how many pending connections queue will hold (TCP clients)
+#define MAXDATASIZE 100 // max number of bytes we can get at once (from TCP clients and UDP clients)
 
 void sigchld_handler(int s)
 {
@@ -46,45 +46,125 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(void)
 {
-    // CREATE TCP SOCKET 1
-	int sockfd, new_fd;  // listen on sock_fd, new connection on new_fd
+    // CREATE UDP SOCKET talker.c -- a datagram "client" demo + listener.c combined
+    int sockfd;
 	struct addrinfo hints, *servinfo, *p;
-	struct sockaddr_storage their_addr; // connector's address information
-	socklen_t sin_size;
-	struct sigaction sa;
-	int yes=1;
-	char s[INET6_ADDRSTRLEN];
 	int rv;
-    // for receiving messages from TCP sockets
+    struct sockaddr_storage their_addr; // ports for server A, B, C
+    socklen_t addr_len; // address length for server A, B, C
+
+    // for send/receive messages over UDP
     int numbytes; // check message length
     char buf[MAXDATASIZE]; // store message
 
 	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_UNSPEC;
-	hints.ai_socktype = SOCK_STREAM;
-	//hints.ai_flags = AI_PASSIVE; // use my IP
+	hints.ai_family = AF_INET6; // set to AF_INET to use IPv4
+	hints.ai_socktype = SOCK_DGRAM;
 
-	if ((rv = getaddrinfo("127.0.0.1", PORTCA, &hints, &servinfo)) != 0) {
+	if ((rv = getaddrinfo("127.0.0.1", PORTSM, &hints, &servinfo)) != 0) {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
-	// loop through all the results and bind to the first we can
+	// loop through all the results and make a socket, then bind
 	for(p = servinfo; p != NULL; p = p->ai_next) {
 		if ((sockfd = socket(p->ai_family, p->ai_socktype,
 				p->ai_protocol)) == -1) {
+			perror("serverM UDP: socket");
+			continue;
+		}
+
+        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
+			close(sockfd);
+			perror("serverM UDP: bind");
+			continue;
+		}
+
+		break;
+	}
+
+	if (p == NULL) {
+		fprintf(stderr, "serverM UDP: failed to create socket\n");
+		return 2;
+	}
+
+    freeaddrinfo(servinfo); // done with this structure
+	// close(sockfd); // always on
+
+    // DONE CREATING UDP SOCKET
+
+    // SEND AND RECEIVE MESSAGES OVER UDP SOCKETS
+    // first receive message from serverA to get port info
+    addr_len = sizeof their_addr;
+	if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+		(struct sockaddr *)&their_addr, &addr_len)) == -1) {
+		perror("recvfrom");
+		exit(1);
+	}
+    printf("serverM UDP: received %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    /**
+    // send request message to server A
+	if ((numbytes = sendto(sockfd, "serverM req info from serverA", strlen("serverM req info from serverA"), 0,
+			 p->ai_addr, p->ai_addrlen)) == -1) 
+    {
+		perror("serverM UDP: sendto");
+		exit(1);
+	}
+    printf("serverM UDP: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    // response from server A
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1, 0,
+			 p->ai_addr, &p->ai_addrlen)) == -1) 
+    {
+		perror("serverM UDP: sendto");
+		exit(1);
+	}
+    printf("serverM UDP: received %d bytes to %s\n", numbytes, "127.0.0.1");
+    // END SEND MESSAGE
+    */
+
+    // END UDP SOCKET
+
+    // CREATE TCP SOCKET 1
+	int sockfd1, new_fd1;  // listen on sock_fd, new connection on new_fd
+	struct addrinfo hints1, *servinfo1, *p1;
+	struct sockaddr_storage their_addr1; // connector's address information
+	socklen_t sin_size1;
+	struct sigaction sa1;
+	int yes1=1;
+	char s1[INET6_ADDRSTRLEN];
+	int rv1;
+    // for receiving messages from TCP sockets
+    int numbytes1; // check message length
+    char buf1[MAXDATASIZE]; // store message
+
+	memset(&hints1, 0, sizeof hints1);
+	hints1.ai_family = AF_UNSPEC;
+	hints1.ai_socktype = SOCK_STREAM;
+	//hints.ai_flags = AI_PASSIVE; // use my IP
+
+	if ((rv1 = getaddrinfo("127.0.0.1", PORTCA, &hints1, &servinfo1)) != 0) {
+		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv1));
+		return 1;
+	}
+
+	// loop through all the results and bind to the first we can
+	for(p1 = servinfo1; p1 != NULL; p1 = p1->ai_next) {
+		if ((sockfd1 = socket(p1->ai_family, p1->ai_socktype,
+				p1->ai_protocol)) == -1) {
 			perror("server: socket");
 			continue;
 		}
 
-		if (setsockopt(sockfd, SOL_SOCKET, SO_REUSEADDR, &yes,
+		if (setsockopt(sockfd1, SOL_SOCKET, SO_REUSEADDR, &yes1,
 				sizeof(int)) == -1) {
 			perror("setsockopt");
 			exit(1);
 		}
 
-		if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
+		if (bind(sockfd1, p1->ai_addr, p1->ai_addrlen) == -1) {
+			close(sockfd1);
 			perror("server: bind");
 			continue;
 		}
@@ -92,22 +172,22 @@ int main(void)
 		break;
 	}
 
-	freeaddrinfo(servinfo); // all done with this structure
+	freeaddrinfo(servinfo1); // all done with this structure
 
-	if (p == NULL)  {
+	if (p1 == NULL)  {
 		fprintf(stderr, "server: failed to bind\n");
 		exit(1);
 	}
 
-	if (listen(sockfd, BACKLOG) == -1) {
+	if (listen(sockfd1, BACKLOG) == -1) {
 		perror("listen");
 		exit(1);
 	}
 
-	sa.sa_handler = sigchld_handler; // reap all dead processes
-	sigemptyset(&sa.sa_mask);
-	sa.sa_flags = SA_RESTART;
-	if (sigaction(SIGCHLD, &sa, NULL) == -1) {
+	sa1.sa_handler = sigchld_handler; // reap all dead processes
+	sigemptyset(&sa1.sa_mask);
+	sa1.sa_flags = SA_RESTART;
+	if (sigaction(SIGCHLD, &sa1, NULL) == -1) {
 		perror("sigaction");
 		exit(1);
 	}
@@ -179,48 +259,48 @@ int main(void)
 		exit(1);
 	}
     // END MAIN TCP SOCKET 2, NOW LISTENING
-
+    
 	printf("server: waiting for connections...\n");
 
 	while(1) {  // main accept() loop
         // LISTEN FOR CLIENT A
-		sin_size = sizeof their_addr;
-		new_fd = accept(sockfd, (struct sockaddr *)&their_addr, &sin_size);
-		if (new_fd == -1) {
+		sin_size1 = sizeof their_addr1;
+		new_fd1 = accept(sockfd1, (struct sockaddr *)&their_addr1, &sin_size1);
+		if (new_fd1 == -1) {
 			perror("accept");
 			continue;
 		}
 
-		inet_ntop(their_addr.ss_family,
-			get_in_addr((struct sockaddr *)&their_addr),
-			s, sizeof s);
-		printf("server: got connection from %s\n", s);
+		inet_ntop(their_addr1.ss_family,
+			get_in_addr((struct sockaddr *)&their_addr1),
+			s1, sizeof s1);
+		printf("server: got connection from %s\n", s1);
 
 		if (!fork()) { // this is the child process
-			close(sockfd); // child doesn't need the listener
+			close(sockfd1); // child doesn't need the listener
             
             // START TALKING HERE
 
             // WAIT FOR CLIENT COMMAND
-            if ((numbytes = recv(new_fd, buf, MAXDATASIZE-1, 0)) == -1) 
+            if ((numbytes1 = recv(new_fd1, buf1, MAXDATASIZE-1, 0)) == -1) 
             {
                 perror("recv");
 	        }
-            buf[numbytes] = '\0'; // ending null char
-            printf("serverM: received '%s'\n",buf);
+            buf1[numbytes1] = '\0'; // ending null char
+            printf("serverM: received '%s'\n",buf1);
 
             // SEND REQUESTED INFO MESSAGE TO CLIENT
-			if (send(new_fd, "10 serverM send req info to clientA", strlen("10 serverM send req info to clientA"), 0) == -1)
+			if (send(new_fd1, "10 serverM send req info to clientA", strlen("10 serverM send req info to clientA"), 0) == -1)
             {
                 perror("send");
             }
              printf("serverM: send '%s'\n", "10 serverM send req info to clientA");
 
             // DONE TALKING HERE
-			close(new_fd);
+			close(new_fd1);
 			exit(0);
 		}
-		close(new_fd);  // parent doesn't need this
+		close(new_fd1);  // parent doesn't need this
         // END TCP ACCEPT FOR CLIENT A
 
         // LISTEN FOR CLIENT B
