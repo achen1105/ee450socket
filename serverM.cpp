@@ -309,6 +309,42 @@ int main(void)
                 }
                 printf("serverM: send '%s'\n", buf);
             }
+            // TXCOINS
+            else if (buf1[0] == 'T' && buf1[1] == 'C')
+            {
+                // TALK TO SERVER A
+                // send req to server A, put buf1 here because want to relay message from CA
+                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
+                        (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
+                {
+                    perror("server M to serverA: sendto");
+                    exit(1);
+                }
+                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+                // receive req info
+                // always put following line before recvfrom
+                servAaddr_len = sizeof servAaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                printf("serverM: received '%s'\n", buf);
+
+                // SEND REQUESTED INFO MESSAGE TO CLIENT
+                if (send(new_fd1, buf, strlen(buf), 0) == -1)
+                {
+                    perror("send");
+                }
+                printf("serverM: send '%s'\n", buf);
+            }
+            else
+            {
+                printf("didnt match any commands");
+            }
 
             // DONE TALKING HERE
 			close(new_fd1);
@@ -317,6 +353,7 @@ int main(void)
 		close(new_fd1);  // parent doesn't need this
         // END TCP ACCEPT FOR CLIENT A
 
+        /**
         // LISTEN FOR CLIENT B
         sin_size2 = sizeof their_addr2;
 		new_fd2 = accept(sockfd2, (struct sockaddr *)&their_addr2, &sin_size2);
@@ -356,6 +393,7 @@ int main(void)
 		}
 		close(new_fd2);  // parent doesn't need this
         // END TCP ACCEPT TO CLIENT B
+        */
 	}
 
 	return 0;

@@ -130,6 +130,22 @@ int main(int argc, char *argv[])
 			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
+		else if (buf[0] == 'T' && buf[1] == 'C')
+		{
+			string transaction(buf);
+			transaction = transaction.substr(3, string::npos);
+			string tcmsg2 = "TC 10";
+
+			// send req info to serverM
+			if ((numbytes = sendto(sockfd, tcmsg2.c_str(), strlen(tcmsg2.c_str()), 0,
+					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+			{
+				perror("server A client socket: sendto");
+				exit(1);
+			}
+			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			printf("The ServerA finished sending the response to the Main Server.\n");
+		}
 		else
 		{
 			// send req info to serverM

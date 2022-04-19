@@ -152,11 +152,16 @@ int main(int argc, char *argv[])
         printf("clientA: received '%s'\n",buf);
         printf("%s statistics are the following.:”Rank--Username--NumofTransacions--Total\n", argv[1]);
     }
-    // TXCOINS
+    // TXCOINS CODE TC
     else if (argc == 4)
     {
+        string username1 = argv[1];
+        string username2 = argv[2];
+        string amt = argv[3];
+        string tcmsg1 = "TC " + username1 + " " + username2 + " " + amt;
+
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "clientA send TXCOINS to serverM", strlen("clientA send TXCOINS to serverM"), 0) == -1)
+        if (send(sockfd, tcmsg1.c_str(), strlen(tcmsg1.c_str()), 0) == -1)
         {
             perror("send");
         }
@@ -171,22 +176,22 @@ int main(int argc, char *argv[])
         printf("clientA: received '%s'\n",buf);
 
         // TXCOINS SCENARIOS
-        if (buf[0]=='1' && buf[1] == '0') // code 1 for txcoins, 0 for successful txcoins
+        if (buf[3]=='1' && buf[4] == '0') // code 1 for txcoins, 0 for successful txcoins
         {
             // successful TXCOINS
             printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
         }
-        else if (buf[0]=='1' && buf[1] == '1') // code 1 for txcoins, 1 for insufficient balance
+        else if (buf[3]=='1' && buf[4] == '1') // code 1 for txcoins, 1 for insufficient balance
         {
             // insufficient balance
             printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
         }
-        else if (buf[0]=='1' && buf[1] == '2') // code 1 for txcoins, 1 client not in network
+        else if (buf[3]=='1' && buf[4] == '2') // code 1 for txcoins, 1 client not in network
         {
             // 1 not in network
             printf("Unable to proceed with the transaction as <SENDER_USERNAME/RECEIVER_USERNAME> is not part of the network.");
         }
-        else if (buf[0]=='1' && buf[1] == '3') // code 1 for txcoins, 2 clients not in network
+        else if (buf[3]=='1' && buf[4] == '3') // code 1 for txcoins, 2 clients not in network
         {
             // 2 not in network
             printf("Unable to proceed with the transaction as %s and %s are not part of the network.", argv[1], argv[2]);
