@@ -108,11 +108,11 @@ int main(int argc, char *argv[])
         printf("clientA: received '%s'\n",buf);
         printf("TXLIST is generated.");
     }
-    // CHECK WALLET; code 00 for check wallet
+    // CHECK WALLET; code CW for check wallet
     else if (argc == 2)
     {
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "00 CA send CHECKWALLET to SM", strlen("00 CA send CHECKWALLET to SM"), 0) == -1)
+        if (send(sockfd, "CW CA send CHECKWALLET to SM", strlen("CW CA send CHECKWALLET to SM"), 0) == -1)
         {
             perror("send");
         }

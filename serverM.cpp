@@ -14,6 +14,7 @@
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <string>
 
 #define PORTCA "25421"  // the port users will be connecting to for client A
 #define PORTCB "26421"  // the port users will be connecting to for client A
@@ -275,15 +276,40 @@ int main(void)
 	        }
             buf1[numbytes1] = '\0'; // ending null char
             printf("serverM: received '%s'\n",buf1);
+            std::string buf1str = buf1;
 
-            // TALK TO SERVER A
-
-            // SEND REQUESTED INFO MESSAGE TO CLIENT
-			if (send(new_fd1, "00 808", strlen("00 808"), 0) == -1)
+            // CHECK WALLET OPERATIONS
+            if (buf1[0] == 'C' && buf1[1] == 'W')
             {
-                perror("send");
+                // TALK TO SERVER A
+                // send req to server A
+                if ((numbytes = sendto(sockfd, "CW NAME", strlen("CW NAME"), 0,
+                        (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
+                {
+                    perror("server M to serverA: sendto");
+                    exit(1);
+                }
+                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+                // receive req info
+                // always put following line before recvfrom
+                servAaddr_len = sizeof servAaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                printf("serverM: received '%s'\n", buf);
+
+                // SEND REQUESTED INFO MESSAGE TO CLIENT
+                if (send(new_fd1, buf, strlen(buf), 0) == -1)
+                {
+                    perror("send");
+                }
+                printf("serverM: send '%s'\n", buf);
             }
-             printf("serverM: send '%s'\n", "00 808");
 
             // DONE TALKING HERE
 			close(new_fd1);

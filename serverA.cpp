@@ -15,6 +15,7 @@ https://stackoverflow.com/questions/9873061/how-to-set-the-source-port-in-the-ud
 #include <arpa/inet.h>
 #include <sys/wait.h>
 #include <signal.h>
+#include <string>
 
 #define SERVERMPORT "24421"	// the port users will be connecting to (destination)
 #define SERVERAPORT "21421" // the source port
@@ -73,15 +74,31 @@ int main(int argc, char *argv[])
 		printf("serverA: received '%s'\n", buf);
 		printf("The ServerA received a request from the Main Server.\n");
 
-		// send req info to serverM
-		if ((numbytes = sendto(sockfd, "req info", strlen("req info"), 0,
-				(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+		// CHECK WALLET
+		if (buf[0] == 'C' && buf[1] == 'W')
 		{
-			perror("server A client socket: sendto");
-			exit(1);
+			// send req info to serverM
+			if ((numbytes = sendto(sockfd, "CW 404", strlen("CW 404"), 0,
+					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+			{
+				perror("server A client socket: sendto");
+				exit(1);
+			}
+			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
-		printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-		printf("The ServerA finished sending the response to the Main Server.\n");
+		else
+		{
+			// send req info to serverM
+			if ((numbytes = sendto(sockfd, "req info", strlen("req info"), 0,
+					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+			{
+				perror("server A client socket: sendto");
+				exit(1);
+			}
+			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			printf("The ServerA finished sending the response to the Main Server.\n");
+		}
 	}
 	
 	return 0;
