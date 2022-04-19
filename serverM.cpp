@@ -46,7 +46,11 @@ void *get_in_addr(struct sockaddr *sa)
 
 int main(void)
 {   
-    int sockfd;
+    int sockfd; // main serverM socket
+    int numbytes; // number of bytes in message
+    char buf[MAXDATASIZE]; // buffer to store recvfrom messages
+
+    // create serverM socket
     sockfd=socket(AF_INET,SOCK_DGRAM,0);
 
     // SERVER M INFO
@@ -62,6 +66,7 @@ int main(void)
 	servAaddr.sin_addr.s_addr= inet_addr("127.0.0.1");
 	servAaddr.sin_port=htons(21421); //source port for outgoing packets
 
+    // bind serverM socket to serverM addr info
     if(bind(sockfd, (struct sockaddr*)&servMaddr, sizeof(servMaddr)) < 0)
     {
         perror("bind");
@@ -73,10 +78,7 @@ int main(void)
 
     // DONE CREATING UDP SOCKET
 
-    // test send
-    int numbytes;
-    char buf[MAXDATASIZE];
-
+    // test send to server A
     if ((numbytes = sendto(sockfd, "test", strlen("test"), 0,
 			 (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
 	{
@@ -87,6 +89,7 @@ int main(void)
 
     // WAIT FOR SERVERA TO SEND MESSAGE
     
+    // always put following line before recvfrom
     servAaddr_len = sizeof servAaddr;
     if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
         (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 

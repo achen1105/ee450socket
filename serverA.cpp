@@ -23,29 +23,36 @@ https://stackoverflow.com/questions/9873061/how-to-set-the-source-port-in-the-ud
 
 int main(int argc, char *argv[])
 {
-	int sockfd;
-	struct sockaddr_in servMaddr,servAaddr;
+	int sockfd; // main serverA socket to send and receive
+	int numbytes; // check bytes in message
+    char buf[MAXDATASIZE]; // store received messages
+	struct sockaddr_in servMaddr,servAaddr; // servMaddr the server M addr info, servAaddr the server A addr info
+	// create socket
 	sockfd=socket(AF_INET,SOCK_DGRAM,0);
 
+	// server M addr info
 	servMaddr.sin_family = AF_INET;
 	socklen_t servMaddr_len;
 	servMaddr.sin_addr.s_addr=inet_addr("127.0.0.1");
 	servMaddr.sin_port=htons(24421); //destination port for incoming packets
 
-
+	// server A addr info
 	servAaddr.sin_family = AF_INET;
 	servAaddr.sin_addr.s_addr= inet_addr("127.0.0.1");
 	servAaddr.sin_port=htons(21421); //source port for outgoing packets
 	
-	bind(sockfd,(struct sockaddr *)&servAaddr,sizeof(servAaddr));
+	// bind main server A socket to server A addr info
+	if (bind(sockfd,(struct sockaddr *)&servAaddr,sizeof(servAaddr)))
+	{
+		perror("bind");
+	}
 	
 	printf("The Server A is up and running using UDP on port %s.\n", SERVERAPORT);
 
 	// test receive
-	servMaddr_len = sizeof servMaddr;
-	int numbytes;
-    char buf[MAXDATASIZE];
 
+	// always put following line before recvfrom
+	servMaddr_len = sizeof servMaddr;
     if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
         (struct sockaddr *) &servMaddr, &servMaddr_len)) == -1) 
     {
@@ -56,14 +63,13 @@ int main(int argc, char *argv[])
     printf("serverA: received '%s'\n", buf);
 
 	// SEND TO SERVER M
-	int numbytesSA;
-	if ((numbytesSA = sendto(sockfd, "test", strlen("test"), 0,
+	if ((numbytes = sendto(sockfd, "test", strlen("test"), 0,
 			 (struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 	{
 		perror("server A client socket: sendto");
 		exit(1);
 	}
-	printf("server A: sent %d bytes to %s\n", numbytesSA, "127.0.0.1");
+	printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
 	return 0;
 }
