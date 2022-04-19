@@ -78,8 +78,20 @@ int main(void)
 
     // DONE CREATING UDP SOCKET
 
-    // test send to server A
-    if ((numbytes = sendto(sockfd, "test", strlen("test"), 0,
+    // WAIT FOR SERVERA TO SEND MESSAGE (JUST AS TEST)
+    // always put following line before recvfrom
+    servAaddr_len = sizeof servAaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    printf("serverM: received '%s'\n", buf);
+
+    // send req to server A
+    if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
 			 (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
 	{
 		perror("server M to serverA: sendto");
@@ -87,8 +99,7 @@ int main(void)
 	}
 	printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
-    // WAIT FOR SERVERA TO SEND MESSAGE
-    
+    // receive req info
     // always put following line before recvfrom
     servAaddr_len = sizeof servAaddr;
     if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
