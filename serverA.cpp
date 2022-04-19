@@ -81,8 +81,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-		printf("The ServerA finished sending the response to the Main Server.");
-
+		printf("The ServerA finished sending the response to the Main Server.\n");
 	}
 	
 	return 0;

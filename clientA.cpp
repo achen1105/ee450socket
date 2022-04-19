@@ -7,12 +7,14 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <netdb.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
-
+#include <netinet/in.h>
+#include <netdb.h>
 #include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <string>
 
 #define PORT "25421" // the port client will be connecting to 
 
@@ -106,11 +108,11 @@ int main(int argc, char *argv[])
         printf("clientA: received '%s'\n",buf);
         printf("TXLIST is generated.");
     }
-    // CHECK WALLET
+    // CHECK WALLET; code 00 for check wallet
     else if (argc == 2)
     {
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "clientA send CHECKWALLET to serverM", strlen("clientA send CHECKWALLET to serverM"), 0) == -1)
+        if (send(sockfd, "00 CA send CHECKWALLET to SM", strlen("00 CA send CHECKWALLET to SM"), 0) == -1)
         {
             perror("send");
         }
@@ -123,7 +125,9 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
-        printf("The current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1]);
+        std::string balance_amount = buf;
+        balance_amount = balance_amount.substr(3, std::string::npos);
+        printf("The current balance of %s is: %s alicoins.", argv[1], balance_amount.c_str());
     }
     // STATS
     else if (argc == 3 && strcmp(argv[2],"stats") == 0)

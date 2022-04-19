@@ -279,11 +279,11 @@ int main(void)
             // TALK TO SERVER A
 
             // SEND REQUESTED INFO MESSAGE TO CLIENT
-			if (send(new_fd1, "10 serverM send req info to clientA", strlen("10 serverM send req info to clientA"), 0) == -1)
+			if (send(new_fd1, "00 808", strlen("00 808"), 0) == -1)
             {
                 perror("send");
             }
-             printf("serverM: send '%s'\n", "10 serverM send req info to clientA");
+             printf("serverM: send '%s'\n", "00 808");
 
             // DONE TALKING HERE
 			close(new_fd1);
