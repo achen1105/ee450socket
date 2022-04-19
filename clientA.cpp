@@ -16,6 +16,8 @@
 #include <signal.h>
 #include <string>
 
+using namespace std;
+
 #define PORT "25421" // the port client will be connecting to 
 
 #define MAXDATASIZE 100 // max number of bytes we can get at once 
@@ -111,8 +113,10 @@ int main(int argc, char *argv[])
     // CHECK WALLET; code CW for check wallet
     else if (argc == 2)
     {
+        string username(argv[1]);
+        string cwmsg1 = "CW " + username;
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "CW CA send CHECKWALLET to SM", strlen("CW CA send CHECKWALLET to SM"), 0) == -1)
+        if (send(sockfd, cwmsg1.c_str(), strlen(cwmsg1.c_str()), 0) == -1)
         {
             perror("send");
         }
@@ -125,8 +129,8 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
-        std::string balance_amount = buf;
-        balance_amount = balance_amount.substr(3, std::string::npos);
+        string balance_amount = buf;
+        balance_amount = balance_amount.substr(3, string::npos);
         printf("The current balance of %s is: %s alicoins.", argv[1], balance_amount.c_str());
     }
     // STATS

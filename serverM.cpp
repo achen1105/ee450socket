@@ -276,14 +276,13 @@ int main(void)
 	        }
             buf1[numbytes1] = '\0'; // ending null char
             printf("serverM: received '%s'\n",buf1);
-            std::string buf1str = buf1;
 
             // CHECK WALLET OPERATIONS
             if (buf1[0] == 'C' && buf1[1] == 'W')
             {
                 // TALK TO SERVER A
-                // send req to server A
-                if ((numbytes = sendto(sockfd, "CW NAME", strlen("CW NAME"), 0,
+                // send req to server A, put buf1 here because want to relay message from CA
+                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
                         (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
                 {
                     perror("server M to serverA: sendto");

@@ -16,11 +16,50 @@ https://stackoverflow.com/questions/9873061/how-to-set-the-source-port-in-the-ud
 #include <sys/wait.h>
 #include <signal.h>
 #include <string>
+#include <fstream>
+#include <iostream>
+
+using namespace std;
 
 #define SERVERMPORT "24421"	// the port users will be connecting to (destination)
 #define SERVERAPORT "21421" // the source port
 #define MAXDATASIZE 100 // max number of bytes we can get at once (from TCP clients and UDP clients)
 
+// https://www.cplusplus.com/doc/tutorial/files/
+// https://stackoverflow.com/questions/20372661/read-word-by-word-from-file-in-c
+int checkWallet(string usrnme)
+{
+	string line;
+	int tNum;
+	string tUsr1;
+	string tUsr2;
+	int tAmt;
+
+	int balance = 0;
+	ifstream myfile ("block1.txt");
+
+	if (myfile.is_open())
+	{
+		while (myfile >> tNum >> tUsr1 >> tUsr2 >> tAmt)
+		{
+			// username is sender
+			if (usrnme.compare(tUsr1) == 0)
+			{
+				balance = balance - tAmt;
+			}
+			// username is receiver
+			else if (usrnme.compare(tUsr2) == 0)
+			{
+				balance = balance + tAmt;
+			}
+		}
+
+		myfile.close();
+	}
+
+	else cout << "Unable to open file"; 
+	return balance;
+}
 
 int main(int argc, char *argv[])
 {
@@ -74,11 +113,15 @@ int main(int argc, char *argv[])
 		printf("serverA: received '%s'\n", buf);
 		printf("The ServerA received a request from the Main Server.\n");
 
-		// CHECK WALLET
+		// CHECK WALLET code CW
 		if (buf[0] == 'C' && buf[1] == 'W')
 		{
+			string username(buf);
+			username = username.substr(3, string::npos);
+			string usernameBalance = "CW " + to_string(checkWallet(username));
+
 			// send req info to serverM
-			if ((numbytes = sendto(sockfd, "CW 404", strlen("CW 404"), 0,
+			if ((numbytes = sendto(sockfd, usernameBalance.c_str(), strlen(usernameBalance.c_str()), 0,
 					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 			{
 				perror("server A client socket: sendto");
