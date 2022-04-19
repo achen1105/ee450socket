@@ -45,84 +45,57 @@ void *get_in_addr(struct sockaddr *sa)
 }
 
 int main(void)
-{
-    // CREATE UDP SOCKET talker.c -- a datagram "client" demo + listener.c combined
+{   
     int sockfd;
-	struct addrinfo hints, *servinfo, *p;
-	int rv;
-    struct sockaddr_storage their_addr; // ports for server A, B, C
-    socklen_t addr_len; // address length for server A, B, C
+    sockfd=socket(AF_INET,SOCK_DGRAM,0);
 
-    // for send/receive messages over UDP
-    int numbytes; // check message length
-    char buf[MAXDATASIZE]; // store message
+    // SERVER M INFO
+    struct sockaddr_in servMaddr;
+    servMaddr.sin_family = AF_INET;
+    servMaddr.sin_addr.s_addr = inet_addr("127.0.0.1");
+    servMaddr.sin_port = htons(24421); // Now the server will listen on PORT.
 
-	memset(&hints, 0, sizeof hints);
-	hints.ai_family = AF_INET6; // set to AF_INET to use IPv4
-	hints.ai_socktype = SOCK_DGRAM;
+    // SERVER A INFO
+    struct sockaddr_in servAaddr;
+    socklen_t servAaddr_len;
+    servAaddr.sin_family = AF_INET;
+	servAaddr.sin_addr.s_addr= inet_addr("127.0.0.1");
+	servAaddr.sin_port=htons(21421); //source port for outgoing packets
 
-	if ((rv = getaddrinfo("127.0.0.1", PORTSM, &hints, &servinfo)) != 0) {
-		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
-		return 1;
-	}
+    if(bind(sockfd, (struct sockaddr*)&servMaddr, sizeof(servMaddr)) < 0)
+    {
+        perror("bind");
+        exit(1);
+    }
 
-	// loop through all the results and make a socket, then bind
-	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype,
-				p->ai_protocol)) == -1) {
-			perror("serverM UDP: socket");
-			continue;
-		}
-
-        if (bind(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			close(sockfd);
-			perror("serverM UDP: bind");
-			continue;
-		}
-
-		break;
-	}
-
-	if (p == NULL) {
-		fprintf(stderr, "serverM UDP: failed to create socket\n");
-		return 2;
-	}
-
-    freeaddrinfo(servinfo); // done with this structure
-	// close(sockfd); // always on
+    printf("serverM: waiting to recvfrom...\n");
+    // close(sockfd); keep on
 
     // DONE CREATING UDP SOCKET
 
-    // SEND AND RECEIVE MESSAGES OVER UDP SOCKETS
-    // first receive message from serverA to get port info
-    addr_len = sizeof their_addr;
-	if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
-		(struct sockaddr *)&their_addr, &addr_len)) == -1) {
-		perror("recvfrom");
-		exit(1);
-	}
-    printf("serverM UDP: received %d bytes to %s\n", numbytes, "127.0.0.1");
+    // test send
+    int numbytes;
+    char buf[MAXDATASIZE];
 
-    /**
-    // send request message to server A
-	if ((numbytes = sendto(sockfd, "serverM req info from serverA", strlen("serverM req info from serverA"), 0,
-			 p->ai_addr, p->ai_addrlen)) == -1) 
-    {
-		perror("serverM UDP: sendto");
+    if ((numbytes = sendto(sockfd, "test", strlen("test"), 0,
+			 (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
+	{
+		perror("server M to serverA: sendto");
 		exit(1);
 	}
-    printf("serverM UDP: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+	printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
-    // response from server A
-    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1, 0,
-			 p->ai_addr, &p->ai_addrlen)) == -1) 
+    // WAIT FOR SERVERA TO SEND MESSAGE
+    
+    servAaddr_len = sizeof servAaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
     {
-		perror("serverM UDP: sendto");
-		exit(1);
-	}
-    printf("serverM UDP: received %d bytes to %s\n", numbytes, "127.0.0.1");
-    // END SEND MESSAGE
-    */
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    printf("serverM: received '%s'\n", buf);
 
     // END UDP SOCKET
 
@@ -288,6 +261,8 @@ int main(void)
 	        }
             buf1[numbytes1] = '\0'; // ending null char
             printf("serverM: received '%s'\n",buf1);
+
+            // TALK TO SERVER A
 
             // SEND REQUESTED INFO MESSAGE TO CLIENT
 			if (send(new_fd1, "10 serverM send req info to clientA", strlen("10 serverM send req info to clientA"), 0) == -1)

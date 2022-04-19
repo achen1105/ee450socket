@@ -1,4 +1,39 @@
 /**
+    // SEND AND RECEIVE MESSAGES OVER UDP SOCKETS
+    // first receive message from serverA to get port info
+    addr_len = sizeof their_addr;
+	if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+		(struct sockaddr *)&their_addr, &addr_len)) == -1) {
+		perror("recvfrom");
+		exit(1);
+	}
+    printf("serverM UDP: received %d bytes to %s\n", numbytes, "127.0.0.1");
+    */
+
+    /**
+    // send request message to server A
+	if ((numbytes = sendto(sockfd, "serverM req info from serverA", strlen("serverM req info from serverA"), 0,
+			 p->ai_addr, p->ai_addrlen)) == -1) 
+    {
+		perror("serverM UDP: sendto");
+		exit(1);
+	}
+    printf("serverM UDP: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    // response from server A
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1, 0,
+			 p->ai_addr, &p->ai_addrlen)) == -1) 
+    {
+		perror("serverM UDP: sendto");
+		exit(1);
+	}
+    printf("serverM UDP: received %d bytes to %s\n", numbytes, "127.0.0.1");
+    // END SEND MESSAGE
+    */
+
+
+
+/**
     int main(int argc, char** argv)
     {
         
