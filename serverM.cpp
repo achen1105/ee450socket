@@ -22,8 +22,8 @@
 using namespace std;
 
 #define PORTCA "25421"  // the port users will be connecting to for client A
-#define PORTCB "26421"  // the port users will be connecting to for client A
-#define PORTSM "24421" // UDP port for server M 
+#define PORTCB "26421"  // the port users will be connecting to for client B
+#define PORTSM "24421"  // UDP port for server M 
 
 #define BACKLOG 10	 // how many pending connections queue will hold (TCP clients)
 #define MAXDATASIZE 1500 // max number of bytes we can get at once (from TCP clients and UDP clients)
@@ -67,11 +67,12 @@ void writeTXLIST(string list)
 
 int main(void)
 {   
+    // CREATE SERVER M UDP SOCKET
     int sockfd; // main serverM socket
     int numbytes; // number of bytes in message
     char buf[MAXDATASIZE]; // buffer to store recvfrom messages
 
-    // create serverM socket
+    // create serverM UDP socket
     sockfd=socket(AF_INET,SOCK_DGRAM,0);
 
     // SERVER M INFO
@@ -86,6 +87,20 @@ int main(void)
     servAaddr.sin_family = AF_INET;
 	servAaddr.sin_addr.s_addr= inet_addr("127.0.0.1");
 	servAaddr.sin_port=htons(21421); //source port for outgoing packets
+
+    // SERVER B INFO
+    struct sockaddr_in servBaddr;
+    socklen_t servBaddr_len;
+    servBaddr.sin_family = AF_INET;
+	servBaddr.sin_addr.s_addr= inet_addr("127.0.0.1");
+	servBaddr.sin_port=htons(22421); //source port for outgoing packets
+
+    // SERVER C INFO
+    struct sockaddr_in servCaddr;
+    socklen_t servCaddr_len;
+    servCaddr.sin_family = AF_INET;
+	servCaddr.sin_addr.s_addr= inet_addr("127.0.0.1");
+	servCaddr.sin_port=htons(23421); //source port for outgoing packets
 
     // bind serverM socket to serverM addr info
     if(bind(sockfd, (struct sockaddr*)&servMaddr, sizeof(servMaddr)) < 0)
@@ -125,6 +140,72 @@ int main(void)
     servAaddr_len = sizeof servAaddr;
     if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
         (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    printf("serverM: received '%s'\n", buf);
+
+    // WAIT FOR SERVERB TO SEND MESSAGE (JUST AS TEST)
+    // always put following line before recvfrom
+    servBaddr_len = sizeof servBaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    printf("serverM: received '%s'\n", buf);
+
+    // send req to server B
+    if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
+			 (struct sockaddr *) &servBaddr, sizeof(servBaddr))) == -1) 
+	{
+		perror("server M to serverB: sendto");
+		exit(1);
+	}
+	printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    // receive req info
+    // always put following line before recvfrom
+    servBaddr_len = sizeof servBaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    printf("serverM: received '%s'\n", buf);
+
+    // WAIT FOR SERVERC TO SEND MESSAGE (JUST AS TEST)
+    // always put following line before recvfrom
+    servCaddr_len = sizeof servCaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    printf("serverC: received '%s'\n", buf);
+
+    // send req to server C
+    if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
+			 (struct sockaddr *) &servCaddr, sizeof(servCaddr))) == -1) 
+	{
+		perror("server M to serverC: sendto");
+		exit(1);
+	}
+	printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    // receive req info
+    // always put following line before recvfrom
+    servCaddr_len = sizeof servCaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
     {
         perror("recvfrom");
         exit(1);
