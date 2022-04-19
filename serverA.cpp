@@ -181,6 +181,19 @@ int main(int argc, char *argv[])
 			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
+		// STATS ST
+		else if (buf[0] == 'S' && buf[1] == 'T')
+		{
+			// send req info to serverM
+			if ((numbytes = sendto(sockfd, "ranking", strlen("ranking"), 0,
+					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+			{
+				perror("server A client socket: sendto");
+				exit(1);
+			}
+			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			printf("The ServerA finished sending the response to the Main Server.\n");
+		}
 		else
 		{
 			// send req info to serverM

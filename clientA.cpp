@@ -146,11 +146,13 @@ int main(int argc, char *argv[])
         balance_amount = balance_amount.substr(3, string::npos);
         printf("The current balance of %s is: %s alicoins.", argv[1], balance_amount.c_str());
     }
-    // STATS
+    // STATS code ST
     else if (argc == 3 && strcmp(argv[2],"stats") == 0)
     {
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "clientA send STATS to serverM", strlen("clientA send STATS to serverM"), 0) == -1)
+        string username(argv[2]);
+        string stmsg1 = "ST " + username;
+        if (send(sockfd, stmsg1.c_str(), strlen(stmsg1.c_str()), 0) == -1)
         {
             perror("send");
         }
