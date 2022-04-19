@@ -134,7 +134,8 @@ int main(int argc, char *argv[])
 		{
 			string transaction(buf);
 			transaction = transaction.substr(3, string::npos);
-			string tcmsg2 = "TC 10";
+			string username = transaction.substr(0, transaction.find(" "));
+			string tcmsg2 = "TC 10 " + to_string(checkWallet(username));
 
 			// send req info to serverM
 			if ((numbytes = sendto(sockfd, tcmsg2.c_str(), strlen(tcmsg2.c_str()), 0,

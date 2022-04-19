@@ -175,11 +175,14 @@ int main(int argc, char *argv[])
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
 
+        string balance(buf);
+        balance = balance.substr(6, string::npos);
+
         // TXCOINS SCENARIOS
         if (buf[3]=='1' && buf[4] == '0') // code 1 for txcoins, 0 for successful txcoins
         {
             // successful TXCOINS
-            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
+            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :%s alicoins.", argv[1], argv[3], argv[2], argv[1], balance.c_str());
         }
         else if (buf[3]=='1' && buf[4] == '1') // code 1 for txcoins, 1 for insufficient balance
         {
