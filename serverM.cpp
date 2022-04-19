@@ -15,13 +15,18 @@
 #include <sys/wait.h>
 #include <signal.h>
 #include <string>
+#include <fstream>
+#include <iostream>
+#include <sstream>
+
+using namespace std;
 
 #define PORTCA "25421"  // the port users will be connecting to for client A
 #define PORTCB "26421"  // the port users will be connecting to for client A
 #define PORTSM "24421" // UDP port for server M 
 
 #define BACKLOG 10	 // how many pending connections queue will hold (TCP clients)
-#define MAXDATASIZE 100 // max number of bytes we can get at once (from TCP clients and UDP clients)
+#define MAXDATASIZE 1500 // max number of bytes we can get at once (from TCP clients and UDP clients)
 
 void sigchld_handler(int s)
 {
@@ -43,6 +48,21 @@ void *get_in_addr(struct sockaddr *sa)
 	}
 
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
+}
+
+// https://www.w3schools.com/cpp/cpp_files.asp
+void writeTXLIST(string list)
+{
+    string line;
+    istringstream f(list);
+    ofstream myfile("alichain.txt");
+
+    while (getline(f, line))
+    {
+        myfile << line << '\n';
+    }
+
+    myfile.close();
 }
 
 int main(void)
@@ -340,6 +360,41 @@ int main(void)
                     perror("send");
                 }
                 printf("serverM: send '%s'\n", buf);
+            }
+            // TXLIST
+            else if (buf1[0] == 'T' && buf1[1] == 'L')
+            {
+                // TALK TO SERVER A
+                // send req to server A, put buf1 here because want to relay message from CA
+                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
+                        (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
+                {
+                    perror("server M to serverA: sendto");
+                    exit(1);
+                }
+                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+                // receive req info from A
+                // always put following line before recvfrom
+                servAaddr_len = sizeof servAaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                printf("serverM: received '%s'\n", buf);
+
+                writeTXLIST(buf);
+
+                // SEND REQUESTED INFO MESSAGE TO CLIENT
+                // use buf1 here because it is currently TL code
+                if (send(new_fd1, buf1, strlen(buf1), 0) == -1)
+                {
+                    perror("send");
+                }
+                printf("serverM: send '%s'\n", buf1);
             }
             else
             {

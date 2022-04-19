@@ -23,7 +23,7 @@ using namespace std;
 
 #define SERVERMPORT "24421"	// the port users will be connecting to (destination)
 #define SERVERAPORT "21421" // the source port
-#define MAXDATASIZE 100 // max number of bytes we can get at once (from TCP clients and UDP clients)
+#define MAXDATASIZE 1500 // max number of bytes we can get at once (from TCP clients and UDP clients)
 
 // https://www.cplusplus.com/doc/tutorial/files/
 // https://stackoverflow.com/questions/20372661/read-word-by-word-from-file-in-c
@@ -59,6 +59,26 @@ int checkWallet(string usrnme)
 
 	else cout << "Unable to open file"; 
 	return balance;
+}
+
+string txList()
+{
+	ifstream myfile ("block1.txt");
+	string line;
+	string list = "";
+
+	if (myfile.is_open())
+	{
+		while (getline(myfile, line))
+		{
+			list = list + line + "\n";
+		}
+
+		myfile.close();
+	}
+
+	else cout << "Unable to open file"; 
+	return list;
 }
 
 int main(int argc, char *argv[])
@@ -130,6 +150,7 @@ int main(int argc, char *argv[])
 			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
+		// TXCOINS TC
 		else if (buf[0] == 'T' && buf[1] == 'C')
 		{
 			string transaction(buf);
@@ -139,6 +160,19 @@ int main(int argc, char *argv[])
 
 			// send req info to serverM
 			if ((numbytes = sendto(sockfd, tcmsg2.c_str(), strlen(tcmsg2.c_str()), 0,
+					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+			{
+				perror("server A client socket: sendto");
+				exit(1);
+			}
+			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			printf("The ServerA finished sending the response to the Main Server.\n");
+		}
+		// TXLIST TL
+		else if (buf[0] == 'T' && buf[1] == 'L')
+		{
+			// send req info to serverM
+			if ((numbytes = sendto(sockfd, txList().c_str(), strlen(txList().c_str()), 0,
 					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 			{
 				perror("server A client socket: sendto");
