@@ -381,6 +381,8 @@ int main(void)
             // CHECK WALLET OPERATIONS
             if (buf1[0] == 'C' && buf1[1] == 'W')
             {
+                int totalBalance = 0;
+
                 // TALK TO SERVER A
                 // send req to server A, put buf1 here because want to relay message from CA
                 if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
@@ -402,13 +404,65 @@ int main(void)
                 }
                 buf[numbytes] = '\0';
                 printf("serverM: received '%s'\n", buf);
+                string balanceA(buf);
+                totalBalance = totalBalance + stoi(balanceA, nullptr, 10);
+
+                // TALK TO SERVER B
+                // send req to server B, put buf1 here because want to relay message from CA
+                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
+                        (struct sockaddr *) &servBaddr, sizeof(servBaddr))) == -1) 
+                {
+                    perror("server M to serverB: sendto");
+                    exit(1);
+                }
+                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+                // receive req info
+                // always put following line before recvfrom
+                servBaddr_len = sizeof servBaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                printf("serverM: received '%s'\n", buf);
+                string balanceB(buf);
+                totalBalance = totalBalance + stoi(balanceB, nullptr, 10);
+
+                // TALK TO SERVER C
+                // send req to server C, put buf1 here because want to relay message from CA
+                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
+                        (struct sockaddr *) &servCaddr, sizeof(servCaddr))) == -1) 
+                {
+                    perror("server M to serverC: sendto");
+                    exit(1);
+                }
+                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+                // receive req info
+                // always put following line before recvfrom
+                servCaddr_len = sizeof servCaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                printf("serverM: received '%s'\n", buf);
+                string balanceC(buf);
+                totalBalance = totalBalance + stoi(balanceC, nullptr, 10);
+
+                totalBalance = 1000 + totalBalance;
 
                 // SEND REQUESTED INFO MESSAGE TO CLIENT
-                if (send(new_fd1, buf, strlen(buf), 0) == -1)
+                if (send(new_fd1, to_string(totalBalance).c_str(), strlen(to_string(totalBalance).c_str()), 0) == -1)
                 {
                     perror("send");
                 }
-                printf("serverM: send '%s'\n", buf);
+                printf("serverM: send '%s'\n", to_string(totalBalance).c_str());
             }
             // TXCOINS
             else if (buf1[0] == 'T' && buf1[1] == 'C')

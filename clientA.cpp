@@ -143,7 +143,6 @@ int main(int argc, char *argv[])
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
         string balance_amount = buf;
-        balance_amount = balance_amount.substr(3, string::npos);
         printf("The current balance of %s is: %s alicoins.", argv[1], balance_amount.c_str());
     }
     // STATS code ST

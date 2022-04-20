@@ -138,7 +138,7 @@ int main(int argc, char *argv[])
 		{
 			string username(buf);
 			username = username.substr(3, string::npos);
-			string usernameBalance = "CW " + to_string(checkWallet(username));
+			string usernameBalance = to_string(checkWallet(username));
 
 			// send req info to serverM
 			if ((numbytes = sendto(sockfd, usernameBalance.c_str(), strlen(usernameBalance.c_str()), 0,
