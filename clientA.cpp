@@ -141,7 +141,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0'; // ending null char
-        printf("clientA: received '%s'\n",buf);
+        //printf("clientA: received '%s'\n",buf);
         string balance_amount = buf;
         printf("The current balance of %s is: %s alicoins.", argv[1], balance_amount.c_str());
     }

@@ -107,17 +107,39 @@ int main(int argc, char *argv[])
 		perror("bind");
 	}
 	
-	printf("The Server A is up and running using UDP on port %s.\n", SERVERAPORT);
+	printf("The ServerA is up and running using UDP on port %s.\n", SERVERAPORT);
 
-	// SEND TO SERVER M
+	// TESTING AND CONNECTING TO SERVER M
 	if ((numbytes = sendto(sockfd, "test", strlen("test"), 0,
 			 (struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 	{
 		perror("server A client socket: sendto");
 		exit(1);
 	}
-	printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+	//printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
+	// receive request from serverM
+	// always put following line before recvfrom
+	servMaddr_len = sizeof servMaddr;
+	if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+		(struct sockaddr *) &servMaddr, &servMaddr_len)) == -1) 
+	{
+		perror("recvfrom");
+		exit(1);
+	}
+	buf[numbytes] = '\0';
+	//printf("serverA: received '%s'\n", buf);
+
+	// send req info to serverM
+	if ((numbytes = sendto(sockfd, "req info", strlen("req info"), 0,
+			(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+	{
+		perror("server A client socket: sendto");
+		exit(1);
+	}
+	//printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+	// WAIT FOR MESSAGES FROM SERVER M
 	while (1)
 	{
 		// receive request from serverM
@@ -130,7 +152,7 @@ int main(int argc, char *argv[])
 			exit(1);
 		}
 		buf[numbytes] = '\0';
-		printf("serverA: received '%s'\n", buf);
+		//printf("serverA: received '%s'\n", buf);
 		printf("The ServerA received a request from the Main Server.\n");
 
 		// CHECK WALLET code CW
@@ -147,7 +169,7 @@ int main(int argc, char *argv[])
 				perror("server A client socket: sendto");
 				exit(1);
 			}
-			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			//printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
 		// TXCOINS TC

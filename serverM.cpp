@@ -24,6 +24,9 @@ using namespace std;
 #define PORTCA "25421"  // the port users will be connecting to for client A
 #define PORTCB "26421"  // the port users will be connecting to for client B
 #define PORTSM "24421"  // UDP port for server M 
+#define PORTSA "21421"
+#define PORTSB "22421"
+#define PORTSC "23421"
 
 #define BACKLOG 10	 // how many pending connections queue will hold (TCP clients)
 #define MAXDATASIZE 1500 // max number of bytes we can get at once (from TCP clients and UDP clients)
@@ -74,6 +77,7 @@ int main(void)
 
     // create serverM UDP socket
     sockfd=socket(AF_INET,SOCK_DGRAM,0);
+    printf("The main server is up and running.\n");
 
     // SERVER M INFO
     struct sockaddr_in servMaddr;
@@ -109,7 +113,7 @@ int main(void)
         exit(1);
     }
 
-    printf("serverM: waiting to recvfrom...\n");
+    //printf("serverM: waiting to recvfrom...\n");
     // close(sockfd); keep on
 
     // DONE CREATING UDP SOCKET
@@ -124,7 +128,7 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
-    printf("serverM: received '%s'\n", buf);
+    //printf("serverM: received '%s'\n", buf);
 
     // send req to server A
     if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
@@ -133,7 +137,7 @@ int main(void)
 		perror("server M to serverA: sendto");
 		exit(1);
 	}
-	printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
     // receive req info
     // always put following line before recvfrom
@@ -145,7 +149,7 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
-    printf("serverM: received '%s'\n", buf);
+    //printf("serverM: received '%s'\n", buf);
 
     // WAIT FOR SERVERB TO SEND MESSAGE (JUST AS TEST)
     // always put following line before recvfrom
@@ -157,7 +161,7 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
-    printf("serverM: received '%s'\n", buf);
+    //printf("serverM: received '%s'\n", buf);
 
     // send req to server B
     if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
@@ -166,7 +170,7 @@ int main(void)
 		perror("server M to serverB: sendto");
 		exit(1);
 	}
-	printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
     // receive req info
     // always put following line before recvfrom
@@ -178,7 +182,7 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
-    printf("serverM: received '%s'\n", buf);
+    //printf("serverM: received '%s'\n", buf);
 
     // WAIT FOR SERVERC TO SEND MESSAGE (JUST AS TEST)
     // always put following line before recvfrom
@@ -190,7 +194,7 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
-    printf("serverC: received '%s'\n", buf);
+    //printf("serverC: received '%s'\n", buf);
 
     // send req to server C
     if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
@@ -199,7 +203,7 @@ int main(void)
 		perror("server M to serverC: sendto");
 		exit(1);
 	}
-	printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
     // receive req info
     // always put following line before recvfrom
@@ -211,7 +215,7 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
-    printf("serverM: received '%s'\n", buf);
+    //printf("serverM: received '%s'\n", buf);
 
     // END UDP SOCKET
 
@@ -349,7 +353,7 @@ int main(void)
 	}
     // END MAIN TCP SOCKET 2, NOW LISTENING
     
-	printf("server: waiting for connections...\n");
+	//printf("server: waiting for connections...\n");
 
 	while(1) {  // main accept() loop
         // LISTEN FOR CLIENT A
@@ -363,7 +367,7 @@ int main(void)
 		inet_ntop(their_addr1.ss_family,
 			get_in_addr((struct sockaddr *)&their_addr1),
 			s1, sizeof s1);
-		printf("server: got connection from %s\n", s1);
+		//printf("server: got connection from %s\n", s1);
 
 		if (!fork()) { // this is the child process
 			close(sockfd1); // child doesn't need the listener
@@ -376,12 +380,15 @@ int main(void)
                 perror("recv");
 	        }
             buf1[numbytes1] = '\0'; // ending null char
-            printf("serverM: received '%s'\n",buf1);
+            //printf("serverM: received '%s'\n",buf1);
 
             // CHECK WALLET OPERATIONS
             if (buf1[0] == 'C' && buf1[1] == 'W')
             {
                 int totalBalance = 0;
+                string username(buf1);
+                username = username.substr(3, string::npos);
+                printf("The main server received input='%s' from the client using TCP over port %s.\n", username.c_str(), PORTCA);
 
                 // TALK TO SERVER A
                 // send req to server A, put buf1 here because want to relay message from CA
@@ -391,7 +398,8 @@ int main(void)
                     perror("server M to serverA: sendto");
                     exit(1);
                 }
-                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                printf("The main server sent a request to server A.\n");
 
                 // receive req info
                 // always put following line before recvfrom
@@ -403,7 +411,8 @@ int main(void)
                     exit(1);
                 }
                 buf[numbytes] = '\0';
-                printf("serverM: received '%s'\n", buf);
+                //printf("serverM: received '%s'\n", buf);
+                printf("The main server received transactions from Server A using UDP over port %s.\n", PORTSA);
                 string balanceA(buf);
                 totalBalance = totalBalance + stoi(balanceA, nullptr, 10);
 
@@ -415,7 +424,8 @@ int main(void)
                     perror("server M to serverB: sendto");
                     exit(1);
                 }
-                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                printf("The main server sent a request to server B.\n");
 
                 // receive req info
                 // always put following line before recvfrom
@@ -427,7 +437,8 @@ int main(void)
                     exit(1);
                 }
                 buf[numbytes] = '\0';
-                printf("serverM: received '%s'\n", buf);
+                //printf("serverM: received '%s'\n", buf);
+                printf("The main server received transactions from Server B using UDP over port %s.\n", PORTSB);
                 string balanceB(buf);
                 totalBalance = totalBalance + stoi(balanceB, nullptr, 10);
 
@@ -439,7 +450,8 @@ int main(void)
                     perror("server M to serverC: sendto");
                     exit(1);
                 }
-                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                printf("The main server sent a request to server C.\n");
 
                 // receive req info
                 // always put following line before recvfrom
@@ -451,10 +463,12 @@ int main(void)
                     exit(1);
                 }
                 buf[numbytes] = '\0';
-                printf("serverM: received '%s'\n", buf);
+                //printf("serverM: received '%s'\n", buf);
+                printf("The main server received transactions from Server C using UDP over port %s.\n", PORTSC);
                 string balanceC(buf);
                 totalBalance = totalBalance + stoi(balanceC, nullptr, 10);
 
+                // add initial balance
                 totalBalance = 1000 + totalBalance;
 
                 // SEND REQUESTED INFO MESSAGE TO CLIENT
@@ -462,7 +476,8 @@ int main(void)
                 {
                     perror("send");
                 }
-                printf("serverM: send '%s'\n", to_string(totalBalance).c_str());
+                //printf("serverM: send '%s'\n", to_string(totalBalance).c_str());
+                printf("The main server sent the current balance to client A.\n");
             }
             // TXCOINS
             else if (buf1[0] == 'T' && buf1[1] == 'C')
