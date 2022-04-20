@@ -143,7 +143,14 @@ int main(int argc, char *argv[])
         buf[numbytes] = '\0'; // ending null char
         //printf("clientA: received '%s'\n",buf);
         string balance_amount = buf;
-        printf("The current balance of %s is: %s alicoins.", argv[1], balance_amount.c_str());
+        if (balance_amount.compare("F") == 0)
+        {
+            printf("Unable to proceed with the transaction as %s is not part of the network.\n", argv[1]);
+        }
+        else
+        {
+            printf("The current balance of %s is: %s alicoins.\n", argv[1], balance_amount.c_str());
+        }
     }
     // STATS code ST
     else if (argc == 3 && strcmp(argv[2],"stats") == 0)
@@ -189,26 +196,29 @@ int main(int argc, char *argv[])
         buf[numbytes] = '\0'; // ending null char
         printf("clientA: received '%s'\n",buf);
 
-        string balance(buf);
-        balance = balance.substr(6, string::npos);
-
         // TXCOINS SCENARIOS
-        if (buf[3]=='1' && buf[4] == '0') // code 1 for txcoins, 0 for successful txcoins
+        if (buf[3]=='S' && buf[4] == 'C') // code SC successful transaction
         {
             // successful TXCOINS
-            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :%s alicoins.", argv[1], argv[3], argv[2], argv[1], balance.c_str());
+            string bal(buf);
+            bal = bal.substr(6, string::npos);
+            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :%s alicoins.", argv[1], argv[3], argv[2], argv[1], bal.c_str());
         }
-        else if (buf[3]=='1' && buf[4] == '1') // code 1 for txcoins, 1 for insufficient balance
+        else if (buf[3]=='I' && buf[4] == 'B') // code IB insufficient balance
         {
             // insufficient balance
-            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
+            string bal(buf);
+            bal = bal.substr(6, string::npos);
+            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :%s alicoins.", argv[1], argv[3], argv[2], argv[1], bal.c_str());
         }
-        else if (buf[3]=='1' && buf[4] == '2') // code 1 for txcoins, 2 client not in network
+        else if (buf[3]=='O' && buf[4] == 'N') // code ON one client not in network
         {
             // 1 not in network
-            printf("Unable to proceed with the transaction as <SENDER_USERNAME/RECEIVER_USERNAME> is not part of the network.");
+            string userNAN(buf);
+            userNAN = userNAN.substr(6, string::npos);
+            printf("Unable to proceed with the transaction as %s is not part of the network.", userNAN.c_str());
         }
-        else if (buf[3]=='1' && buf[4] == '3') // code 1 for txcoins, 3 clients not in network
+        else if (buf[3]=='B' && buf[4] == 'B') // code BN both clients not in network
         {
             // 2 not in network
             printf("Unable to proceed with the transaction as %s and %s are not part of the network.", argv[1], argv[2]);

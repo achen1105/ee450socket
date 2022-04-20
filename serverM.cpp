@@ -414,6 +414,8 @@ int main(void)
                 //printf("serverM: received '%s'\n", buf);
                 printf("The main server received transactions from Server A using UDP over port %s.\n", PORTSA);
                 string balanceA(buf);
+                string statusA = balanceA.substr(0, 1);
+                balanceA = balanceA.substr(2, string::npos);
                 totalBalance = totalBalance + stoi(balanceA, nullptr, 10);
 
                 // TALK TO SERVER B
@@ -440,6 +442,8 @@ int main(void)
                 //printf("serverM: received '%s'\n", buf);
                 printf("The main server received transactions from Server B using UDP over port %s.\n", PORTSB);
                 string balanceB(buf);
+                string statusB = balanceB.substr(0, 1);
+                balanceB = balanceB.substr(2, string::npos);
                 totalBalance = totalBalance + stoi(balanceB, nullptr, 10);
 
                 // TALK TO SERVER C
@@ -466,22 +470,38 @@ int main(void)
                 //printf("serverM: received '%s'\n", buf);
                 printf("The main server received transactions from Server C using UDP over port %s.\n", PORTSC);
                 string balanceC(buf);
+                string statusC = balanceC.substr(0, 1);
+                balanceC = balanceC.substr(2, string::npos);
                 totalBalance = totalBalance + stoi(balanceC, nullptr, 10);
 
                 // add initial balance
                 totalBalance = 1000 + totalBalance;
 
-                // SEND REQUESTED INFO MESSAGE TO CLIENT
-                if (send(new_fd1, to_string(totalBalance).c_str(), strlen(to_string(totalBalance).c_str()), 0) == -1)
+                // cannot find person in network
+                if (statusA.compare("F") == 0 && statusB.compare("F") == 0 && statusC.compare("F")== 0)
                 {
-                    perror("send");
+                    if (send(new_fd1, "F", strlen("F"), 0) == -1)
+                    {
+                        perror("send");
+                    }
                 }
+                else
+                {
+                    // SEND REQUESTED INFO MESSAGE TO CLIENT
+                    if (send(new_fd1, to_string(totalBalance).c_str(), strlen(to_string(totalBalance).c_str()), 0) == -1)
+                    {
+                        perror("send");
+                    }
+                }
+
                 //printf("serverM: send '%s'\n", to_string(totalBalance).c_str());
                 printf("The main server sent the current balance to client A.\n");
             }
             // TXCOINS
             else if (buf1[0] == 'T' && buf1[1] == 'C')
             {
+                int totalBalance = 0;
+
                 // TALK TO SERVER A
                 // send req to server A, put buf1 here because want to relay message from CA
                 if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,

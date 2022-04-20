@@ -61,6 +61,40 @@ int checkWallet(string usrnme)
 	return balance;
 }
 
+// "T" if in network, "F" if not in network
+string checkUser(string usrnme)
+{
+	string line;
+	int tNum;
+	string tUsr1;
+	string tUsr2;
+	int tAmt;
+
+	ifstream myfile ("block1.txt");
+
+	if (myfile.is_open())
+	{
+		while (myfile >> tNum >> tUsr1 >> tUsr2 >> tAmt)
+		{
+			// username is sender
+			if (usrnme.compare(tUsr1) == 0)
+			{
+				return "T";
+			}
+			// username is receiver
+			else if (usrnme.compare(tUsr2) == 0)
+			{
+				return "T";
+			}
+		}
+
+		myfile.close();
+	}
+
+	else cout << "Unable to open file"; 
+	return "F";
+}
+
 string txList()
 {
 	ifstream myfile ("block1.txt");
@@ -160,7 +194,7 @@ int main(int argc, char *argv[])
 		{
 			string username(buf);
 			username = username.substr(3, string::npos);
-			string usernameBalance = to_string(checkWallet(username));
+			string usernameBalance = checkUser(username) + " " + to_string(checkWallet(username));
 
 			// send req info to serverM
 			if ((numbytes = sendto(sockfd, usernameBalance.c_str(), strlen(usernameBalance.c_str()), 0,
