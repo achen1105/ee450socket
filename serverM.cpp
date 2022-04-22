@@ -54,16 +54,27 @@ void *get_in_addr(struct sockaddr *sa)
 }
 
 // https://www.w3schools.com/cpp/cpp_files.asp
-void writeTXLIST(string list)
+void writeTXLIST(string list, int size)
 {
     string line;
+    string lines[size];
     istringstream f(list);
     ofstream myfile("alichain.txt");
 
     while (getline(f, line))
     {
+        //lines[size];
         myfile << line << '\n';
     }
+
+    /**
+    std::sort(lines.begin(), lines.end());
+
+    for (int i = 0; i < size; i++)
+    {
+        myfile << lines[i] << '\n';
+    }
+    */
 
     myfile.close();
 }
@@ -779,16 +790,16 @@ int main(void)
             // TXLIST
             else if (buf1[0] == 'T' && buf1[1] == 'L')
             {
+                string txList;
                 // TALK TO SERVER A
                 // send req to server A, put buf1 here because want to relay message from CA
-                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
+                if ((numbytes = sendto(sockfd, "TL", strlen("TL"), 0,
                         (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
                 {
                     perror("server M to serverA: sendto");
                     exit(1);
                 }
                 printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-
                 // receive req info from A
                 // always put following line before recvfrom
                 servAaddr_len = sizeof servAaddr;
@@ -799,17 +810,64 @@ int main(void)
                     exit(1);
                 }
                 buf[numbytes] = '\0';
+                string temp1(buf);
+                txList = txList + temp1;
                 printf("serverM: received '%s'\n", buf);
 
-                writeTXLIST(buf);
+                // TALK TO SERVER B
+                if ((numbytes = sendto(sockfd, "TL", strlen("TL"), 0,
+                        (struct sockaddr *) &servBaddr, sizeof(servBaddr))) == -1) 
+                {
+                    perror("server M to serverB: sendto");
+                    exit(1);
+                }
+                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                // receive req info from B
+                // always put following line before recvfrom
+                servBaddr_len = sizeof servBaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                string temp2(buf);
+                txList = txList + temp2;
+                printf("serverM: received '%s'\n", buf);
+
+                // TALK TO SERVER C
+                // send req to server C, put buf1 here because want to relay message from CA
+                if ((numbytes = sendto(sockfd, "TL", strlen("TL"), 0,
+                        (struct sockaddr *) &servCaddr, sizeof(servCaddr))) == -1) 
+                {
+                    perror("server M to serverC: sendto");
+                    exit(1);
+                }
+                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                // receive req info from C
+                // always put following line before recvfrom
+                servCaddr_len = sizeof servCaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                string temp3(buf);
+                txList = txList + temp3;
+                printf("serverM: received '%s'\n", buf);
+
+                writeTXLIST(txList, 20);
 
                 // SEND REQUESTED INFO MESSAGE TO CLIENT
                 // use buf1 here because it is currently TL code
-                if (send(new_fd1, buf1, strlen(buf1), 0) == -1)
+                if (send(new_fd1, "done writing", strlen("done writing"), 0) == -1)
                 {
                     perror("send");
                 }
-                printf("serverM: send '%s'\n", buf1);
+                printf("serverM: send '%s'\n", "done writing");
             }
             // STATS code ST
             else if (buf1[0] == 'S' && buf1[1] == 'T')
