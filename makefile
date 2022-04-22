@@ -1,6 +1,7 @@
 # all
-all: serverM.o serverA.o serverB.o serverC.o clientA.o clientB.o
-	g++ -Wall -ggdb serverM.o serverA.o serverB.o serverC.o clientA.o clientB.o -o all
+#all: serverM.o serverA.o serverB.o serverC.o clientA.o clientB.o
+#	g++ -Wall -ggdb serverM.o serverA.o serverB.o serverC.o clientA.o clientB.o -o all
+all: serverM serverA serverB serverC clientA clientB
 
 # server M
 serverM: serverM.o
@@ -39,7 +40,8 @@ clientB.o: clientB.cpp
 
 #clean
 clean:
-	rm serverM.o serverA.o serverB.o serverC.o clientA.o clientB.o serverM serverA serverB serverC clientA clientB all
+	rm serverM.o serverA.o serverB.o serverC.o clientA.o clientB.o serverM serverA serverB serverC clientA clientB
+
 
 # test makefiles
 #test: main.o
