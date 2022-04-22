@@ -252,15 +252,19 @@ int main(int argc, char *argv[])
 		}
 		else
 		{
+			// extra check wallet and check user to go with private method in serverM
+			string username(buf);
+			string usernameBalance = checkUser(username) + " " + to_string(checkWallet(username));
+
 			// send req info to serverM
-			if ((numbytes = sendto(sockfd, "req info", strlen("req info"), 0,
+			if ((numbytes = sendto(sockfd, usernameBalance.c_str(), strlen(usernameBalance.c_str()), 0,
 					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 			{
-				perror("server C client socket: sendto");
+				perror("server A client socket: sendto");
 				exit(1);
 			}
-			printf("server C: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-			printf("The ServerC finished sending the response to the Main Server.\n");
+			//printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
 	}
 	

@@ -218,7 +218,7 @@ int main(int argc, char *argv[])
             userNAN = userNAN.substr(6, string::npos);
             printf("Unable to proceed with the transaction as %s is not part of the network.", userNAN.c_str());
         }
-        else if (buf[3]=='B' && buf[4] == 'B') // code BN both clients not in network
+        else if (buf[3]=='B' && buf[4] == 'N') // code BN both clients not in network
         {
             // 2 not in network
             printf("Unable to proceed with the transaction as %s and %s are not part of the network.", argv[1], argv[2]);

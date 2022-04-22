@@ -68,6 +68,109 @@ void writeTXLIST(string list)
     myfile.close();
 }
 
+// "F if not found, then int balance"
+string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t servAaddr_len, sockaddr_in servBaddr, socklen_t servBaddr_len, sockaddr_in servCaddr, socklen_t servCaddr_len)
+{
+    int totalBalance = 0;
+    int numbytes;
+    char buf[MAXDATASIZE];
+    printf("checking wallet for %s\n", usr.c_str());
+
+    // TALK TO SERVER A
+    // send req to server A, put buf1 here because want to relay message from CA
+    if ((numbytes = sendto(sockfd, usr.c_str(), strlen(usr.c_str()), 0,
+            (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
+    {
+        perror("server M to serverA: sendto");
+        exit(1);
+    }
+    //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+    printf("The main server sent a request to server A.\n");
+
+    // receive req info
+    // always put following line before recvfrom
+    servAaddr_len = sizeof servAaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    //printf("serverM: received '%s'\n", buf);
+    //printf("The main server received transactions from Server A using UDP over port %s.\n", PORTSA);
+    string balanceA(buf);
+    string statusA = balanceA.substr(0, 1);
+    balanceA = balanceA.substr(2, string::npos);
+    totalBalance = totalBalance + stoi(balanceA, nullptr, 10);
+
+    // TALK TO SERVER B
+    // send req to server B, put buf1 here because want to relay message from CA
+    if ((numbytes = sendto(sockfd, usr.c_str(), strlen(usr.c_str()), 0,
+            (struct sockaddr *) &servBaddr, sizeof(servBaddr))) == -1) 
+    {
+        perror("server M to serverB: sendto");
+        exit(1);
+    }
+    //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+    printf("The main server sent a request to server B.\n");
+
+    // receive req info
+    // always put following line before recvfrom
+    servBaddr_len = sizeof servBaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    //printf("serverM: received '%s'\n", buf);
+    printf("The main server received transactions from Server B using UDP over port %s.\n", PORTSB);
+    string balanceB(buf);
+    string statusB = balanceB.substr(0, 1);
+    balanceB = balanceB.substr(2, string::npos);
+    totalBalance = totalBalance + stoi(balanceB, nullptr, 10);
+
+    // TALK TO SERVER C
+    // send req to server C, put buf1 here because want to relay message from CA
+    if ((numbytes = sendto(sockfd, usr.c_str(), strlen(usr.c_str()), 0,
+            (struct sockaddr *) &servCaddr, sizeof(servCaddr))) == -1) 
+    {
+        perror("server M to serverC: sendto");
+        exit(1);
+    }
+    //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+    printf("The main server sent a request to server C.\n");
+
+    // receive req info
+    // always put following line before recvfrom
+    servCaddr_len = sizeof servCaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+    //printf("serverM: received '%s'\n", buf);
+    printf("The main server received transactions from Server C using UDP over port %s.\n", PORTSC);
+    string balanceC(buf);
+    string statusC = balanceC.substr(0, 1);
+    balanceC = balanceC.substr(2, string::npos);
+    totalBalance = totalBalance + stoi(balanceC, nullptr, 10);
+
+    // add initial balance
+    totalBalance = 1000 + totalBalance;
+
+    // cannot find person in network
+    if (statusA.compare("F") == 0 && statusB.compare("F") == 0 && statusC.compare("F")== 0)
+    {
+        return "F 0";
+    }
+    return "T " + to_string(totalBalance);
+}
+
 int main(void)
 {   
     // CREATE SERVER M UDP SOCKET
@@ -500,36 +603,72 @@ int main(void)
             // TXCOINS
             else if (buf1[0] == 'T' && buf1[1] == 'C')
             {
-                int totalBalance = 0;
+                string username1(buf1);
+                // get rid of the code at the front
+                username1 = username1.substr(3, string::npos);
+                // save username2
+                string username2 = username1;
+                // amount
+                int amt = stoi(username1.substr(username1.find_last_of(" ") + 1, string::npos), nullptr, 10);
+                username1 = username1.substr(0, username1.find_first_of(" "));
+                username2 = username2.substr(username2.find_first_of(" ") + 1, string::npos);
+                username2 = username2.substr(0, username2.find_first_of(" "));
 
-                // TALK TO SERVER A
-                // send req to server A, put buf1 here because want to relay message from CA
-                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
-                        (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
-                {
-                    perror("server M to serverA: sendto");
-                    exit(1);
-                }
-                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                printf("The main server received %s to transfer %s coins to %s using TCP over port %s.\n", username1.c_str(), to_string(amt).c_str(), username2.c_str(), PORTCA);
 
-                // receive req info
-                // always put following line before recvfrom
-                servAaddr_len = sizeof servAaddr;
-                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
-                    (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
-                {
-                    perror("recvfrom");
-                    exit(1);
-                }
-                buf[numbytes] = '\0';
-                printf("serverM: received '%s'\n", buf);
+                string results1 = checkWallet(sockfd, username1, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len);
+                string results2 = checkWallet(sockfd, username2, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len);
+                int results1Balance = stoi(results1.substr(2, string::npos), nullptr, 10);
 
-                // SEND REQUESTED INFO MESSAGE TO CLIENT
-                if (send(new_fd1, buf, strlen(buf), 0) == -1)
+                // BOTH NOT IN NETWORK
+                if (results1.substr(0, 1).compare("F") == 0 && results2.substr(0,1).compare("F") == 0)
                 {
-                    perror("send");
+                    // SEND REQUESTED INFO MESSAGE TO CLIENT
+                    if (send(new_fd1, "TC BN", strlen("TC BN"), 0) == -1)
+                    {
+                        perror("send");
+                    }
                 }
-                printf("serverM: send '%s'\n", buf);
+                // USERNAME 1 NOT IN NETWORK
+                else if (results1.substr(0, 1).compare("F") == 0)
+                {
+                    string msgTCON = "TC ON " + username1;
+                    // SEND REQUESTED INFO MESSAGE TO CLIENT
+                    if (send(new_fd1, msgTCON.c_str(), strlen(msgTCON.c_str()), 0) == -1)
+                    {
+                        perror("send");
+                    }
+                }
+                // USERNAME 2 NOT IN NETWORK
+                else if (results2.substr(0, 1).compare("F") == 0)
+                {
+                    string msgTCON = "TC ON " + username2;
+                    // SEND REQUESTED INFO MESSAGE TO CLIENT
+                    if (send(new_fd1, msgTCON.c_str(), strlen(msgTCON.c_str()), 0) == -1)
+                    {
+                        perror("send");
+                    }
+                }
+                // INSUFFICIENT BALANCE
+                else if (results1Balance < amt)
+                {
+                    string msgTCIB = "TC IB " + to_string(results1Balance);
+                    // SEND REQUESTED INFO MESSAGE TO CLIENT
+                    if (send(new_fd1, msgTCIB.c_str(), strlen(msgTCIB.c_str()), 0) == -1)
+                    {
+                        perror("send");
+                    }
+                }
+                // SUCCESSFUL TRANSACTION
+                else
+                {
+                    string msgTCSC = "TC SC " + to_string(results1Balance);
+                    // SEND REQUESTED INFO MESSAGE TO CLIENT
+                    if (send(new_fd1, msgTCSC.c_str(), strlen(msgTCSC.c_str()), 0) == -1)
+                    {
+                        perror("send");
+                    }
+                }
             }
             // TXLIST
             else if (buf1[0] == 'T' && buf1[1] == 'L')
