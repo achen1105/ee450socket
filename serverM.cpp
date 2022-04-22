@@ -177,6 +177,7 @@ int main(void)
     int sockfd; // main serverM socket
     int numbytes; // number of bytes in message
     char buf[MAXDATASIZE]; // buffer to store recvfrom messages
+    int maxSequence = 0; // max sequence number
 
     // create serverM UDP socket
     sockfd=socket(AF_INET,SOCK_DGRAM,0);
@@ -252,6 +253,13 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
+
+    string tempSequenceA(buf);
+    int maxSequenceA = stoi(tempSequenceA, nullptr, 10);
+    if (maxSequenceA > maxSequence)
+    {
+        maxSequence = maxSequenceA;
+    }
     //printf("serverM: received '%s'\n", buf);
 
     // WAIT FOR SERVERB TO SEND MESSAGE (JUST AS TEST)
@@ -285,6 +293,13 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
+
+    string tempSequenceB(buf);
+    int maxSequenceB = stoi(tempSequenceB, nullptr, 10);
+    if (maxSequenceB > maxSequence)
+    {
+        maxSequence = maxSequenceB;
+    }
     //printf("serverM: received '%s'\n", buf);
 
     // WAIT FOR SERVERC TO SEND MESSAGE (JUST AS TEST)
@@ -318,7 +333,15 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
-    //printf("serverM: received '%s'\n", buf);
+
+    string tempSequenceC(buf);
+    int maxSequenceC = stoi(tempSequenceC, nullptr, 10);
+    if (maxSequenceC > maxSequence)
+    {
+        maxSequence = maxSequenceC;
+    }
+
+    printf("serverM: max sequence is '%s'\n", to_string(maxSequence).c_str());
 
     // END UDP SOCKET
 
@@ -457,6 +480,7 @@ int main(void)
     // END MAIN TCP SOCKET 2, NOW LISTENING
     
 	//printf("server: waiting for connections...\n");
+    int counter = 0;
 
 	while(1) {  // main accept() loop
         // LISTEN FOR CLIENT A
@@ -662,6 +686,80 @@ int main(void)
                 // SUCCESSFUL TRANSACTION
                 else
                 {
+                    printf("THE CURRENT COUNTER IS %s\n", to_string(counter).c_str());
+                    results1Balance = results1Balance - amt;
+                    printf("THE CURRENT SEQ NUM IS %s\n", to_string(maxSequence).c_str());
+                    maxSequence = maxSequence + 1;
+                    string log = "TC " + to_string(maxSequence) + " " + username1 + " " + username2 + " " + to_string(amt);
+                    printf("THE CURRENT SEQ NUM IS %s\n", to_string(maxSequence).c_str());
+                    
+                    // https://stackoverflow.com/questions/9711076/why-does-rand-always-return-the-same-value
+                    srand (time(NULL));
+                    int randServer = rand() % 3;
+                    printf("THE SERVER NUMBER IS %s\n", to_string(randServer).c_str());
+
+                    // Server A
+                    if (randServer == 0)
+                    {
+                        // A
+                        if ((numbytes = sendto(sockfd, log.c_str(), strlen(log.c_str()), 0,
+                        (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
+                        {
+                            perror("server M to serverA: sendto");
+                            exit(1);
+                        }
+                        // always put following line before recvfrom
+                        servAaddr_len = sizeof servAaddr;
+                        if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                            (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
+                        {
+                            perror("recvfrom");
+                            exit(1);
+                        }
+                        buf[numbytes] = '\0';
+                    }
+                    // Server B
+                    else if (randServer == 1)
+                    {
+                        // B
+                        if ((numbytes = sendto(sockfd, log.c_str(), strlen(log.c_str()), 0,
+                        (struct sockaddr *) &servBaddr, sizeof(servBaddr))) == -1) 
+                        {
+                            perror("server M to serverB: sendto");
+                            exit(1);
+                        }
+                        // always put following line before recvfrom
+                        servBaddr_len = sizeof servBaddr;
+                        if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                            (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
+                        {
+                            perror("recvfrom");
+                            exit(1);
+                        }
+                        buf[numbytes] = '\0';
+                    }
+                    // Server C
+                    else if (randServer == 2)
+                    {
+                        // C
+                        if ((numbytes = sendto(sockfd, log.c_str(), strlen(log.c_str()), 0,
+                        (struct sockaddr *) &servCaddr, sizeof(servCaddr))) == -1) 
+                        {
+                            perror("server M to serverC: sendto");
+                            exit(1);
+                        }
+                        // receive req info
+                        // always put following line before recvfrom
+                        servCaddr_len = sizeof servCaddr;
+                        if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                            (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
+                        {
+                            perror("recvfrom");
+                            exit(1);
+                        }
+                        buf[numbytes] = '\0';
+                    }
+
                     string msgTCSC = "TC SC " + to_string(results1Balance);
                     // SEND REQUESTED INFO MESSAGE TO CLIENT
                     if (send(new_fd1, msgTCSC.c_str(), strlen(msgTCSC.c_str()), 0) == -1)

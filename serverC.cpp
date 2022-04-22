@@ -95,6 +95,43 @@ string checkUser(string usrnme)
 	return "F";
 }
 
+// Counts the highest sequence number in the block
+int16_t findMaxSequence()
+{
+	int maxSequence = 0;
+	int tNum;
+	string tUsr1;
+	string tUsr2;
+	int tAmt;
+
+	ifstream myfile ("block3.txt");
+
+	if (myfile.is_open())
+	{
+		while (myfile >> tNum >> tUsr1 >> tUsr2 >> tAmt)
+		{
+			if (tNum > maxSequence)
+			{
+				maxSequence = tNum;
+			}
+		}
+
+		myfile.close();
+	}
+
+	else cout << "Unable to open file"; 
+	return maxSequence;
+}
+
+// writes log at end of block
+//https://stackoverflow.com/questions/6932409/writing-a-string-to-the-end-of-a-file-c#:~:text=To%20append%20contents%20to%20the,(which%20stands%20for%20append).&text=is%20not%20useful-,Show%20activity%20on%20this%20post.,the%20end%20of%20the%20file.
+void writeLog(string tLog)
+{
+	ofstream myfile;
+	myfile.open("block3.txt", ios::app);
+	myfile << "\n" + tLog;
+}
+
 string txList()
 {
 	ifstream myfile ("block3.txt");
@@ -165,7 +202,7 @@ int main(int argc, char *argv[])
     //printf("serverC: received '%s'\n", buf);
 
     // send req info to serverM
-    if ((numbytes = sendto(sockfd, "req info", strlen("req info"), 0,
+    if ((numbytes = sendto(sockfd, to_string(findMaxSequence()).c_str(), strlen(to_string(findMaxSequence()).c_str()), 0,
             (struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
     {
         perror("server C client socket: sendto");
@@ -211,18 +248,18 @@ int main(int argc, char *argv[])
 		{
 			string transaction(buf);
 			transaction = transaction.substr(3, string::npos);
-			string username = transaction.substr(0, transaction.find(" "));
-			string tcmsg2 = "TC 10 " + to_string(checkWallet(username));
 
+			writeLog(transaction);
 			// send req info to serverM
-			if ((numbytes = sendto(sockfd, tcmsg2.c_str(), strlen(tcmsg2.c_str()), 0,
-					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+			if ((numbytes = sendto(sockfd, "confirm logged", strlen("confirm logged"), 0,
+				(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 			{
-				perror("server C client socket: sendto");
+				perror("server B client socket: sendto");
 				exit(1);
 			}
-			printf("server C: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-			printf("The ServerC finished sending the response to the Main Server.\n");
+			
+			//printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			printf("The ServerB finished sending the response to the Main Server.\n");
 		}
 		// TXLIST TL
 		else if (buf[0] == 'T' && buf[1] == 'L')
