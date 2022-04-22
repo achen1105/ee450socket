@@ -69,6 +69,99 @@ void writeTXLIST(string list)
 }
 
 // "F if not found, then int balance"
+int findSequenceNumber(int sockfd, sockaddr_in servAaddr, socklen_t servAaddr_len, sockaddr_in servBaddr, socklen_t servBaddr_len, sockaddr_in servCaddr, socklen_t servCaddr_len)
+{
+    int maxSequence = 0;
+    char buf[MAXDATASIZE];
+    int numbytes;
+
+     // send req to server A
+    if ((numbytes = sendto(sockfd, "SQ", strlen("SQ"), 0,
+			 (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
+	{
+		perror("server M to serverA: sendto");
+		exit(1);
+	}
+	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    // receive req info
+    // always put following line before recvfrom
+    servAaddr_len = sizeof servAaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+
+    string tempSequenceA(buf);
+    int maxSequenceA = stoi(tempSequenceA, nullptr, 10);
+    if (maxSequenceA > maxSequence)
+    {
+        maxSequence = maxSequenceA;
+    }
+
+    // send req to server B
+    if ((numbytes = sendto(sockfd, "SQ", strlen("SQ"), 0,
+			 (struct sockaddr *) &servBaddr, sizeof(servBaddr))) == -1) 
+	{
+		perror("server M to serverB: sendto");
+		exit(1);
+	}
+	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    // receive req info
+    // always put following line before recvfrom
+    servBaddr_len = sizeof servBaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+
+    string tempSequenceB(buf);
+    int maxSequenceB = stoi(tempSequenceB, nullptr, 10);
+    if (maxSequenceB > maxSequence)
+    {
+        maxSequence = maxSequenceB;
+    }
+    //printf("serverM: received '%s'\n", buf);
+
+    // send req to server C
+    if ((numbytes = sendto(sockfd, "SQ", strlen("SQ"), 0,
+			 (struct sockaddr *) &servCaddr, sizeof(servCaddr))) == -1) 
+	{
+		perror("server M to serverC: sendto");
+		exit(1);
+	}
+	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+    // receive req info
+    // always put following line before recvfrom
+    servCaddr_len = sizeof servCaddr;
+    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+        (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
+    {
+        perror("recvfrom");
+        exit(1);
+    }
+    buf[numbytes] = '\0';
+
+    string tempSequenceC(buf);
+    int maxSequenceC = stoi(tempSequenceC, nullptr, 10);
+    if (maxSequenceC > maxSequence)
+    {
+        maxSequence = maxSequenceC;
+    }
+
+    printf("serverM: max sequence is '%s'\n", to_string(maxSequence).c_str());
+    return maxSequence;
+}
+
+// "F if not found, then int balance"
 string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t servAaddr_len, sockaddr_in servBaddr, socklen_t servBaddr_len, sockaddr_in servCaddr, socklen_t servCaddr_len)
 {
     int totalBalance = 0;
@@ -177,7 +270,6 @@ int main(void)
     int sockfd; // main serverM socket
     int numbytes; // number of bytes in message
     char buf[MAXDATASIZE]; // buffer to store recvfrom messages
-    int maxSequence = 0; // max sequence number
 
     // create serverM UDP socket
     sockfd=socket(AF_INET,SOCK_DGRAM,0);
@@ -234,34 +326,6 @@ int main(void)
     buf[numbytes] = '\0';
     //printf("serverM: received '%s'\n", buf);
 
-    // send req to server A
-    if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
-			 (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
-	{
-		perror("server M to serverA: sendto");
-		exit(1);
-	}
-	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-
-    // receive req info
-    // always put following line before recvfrom
-    servAaddr_len = sizeof servAaddr;
-    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
-        (struct sockaddr *) &servAaddr, &servAaddr_len)) == -1) 
-    {
-        perror("recvfrom");
-        exit(1);
-    }
-    buf[numbytes] = '\0';
-
-    string tempSequenceA(buf);
-    int maxSequenceA = stoi(tempSequenceA, nullptr, 10);
-    if (maxSequenceA > maxSequence)
-    {
-        maxSequence = maxSequenceA;
-    }
-    //printf("serverM: received '%s'\n", buf);
-
     // WAIT FOR SERVERB TO SEND MESSAGE (JUST AS TEST)
     // always put following line before recvfrom
     servBaddr_len = sizeof servBaddr;
@@ -272,34 +336,6 @@ int main(void)
         exit(1);
     }
     buf[numbytes] = '\0';
-    //printf("serverM: received '%s'\n", buf);
-
-    // send req to server B
-    if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
-			 (struct sockaddr *) &servBaddr, sizeof(servBaddr))) == -1) 
-	{
-		perror("server M to serverB: sendto");
-		exit(1);
-	}
-	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-
-    // receive req info
-    // always put following line before recvfrom
-    servBaddr_len = sizeof servBaddr;
-    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
-        (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
-    {
-        perror("recvfrom");
-        exit(1);
-    }
-    buf[numbytes] = '\0';
-
-    string tempSequenceB(buf);
-    int maxSequenceB = stoi(tempSequenceB, nullptr, 10);
-    if (maxSequenceB > maxSequence)
-    {
-        maxSequence = maxSequenceB;
-    }
     //printf("serverM: received '%s'\n", buf);
 
     // WAIT FOR SERVERC TO SEND MESSAGE (JUST AS TEST)
@@ -313,35 +349,6 @@ int main(void)
     }
     buf[numbytes] = '\0';
     //printf("serverC: received '%s'\n", buf);
-
-    // send req to server C
-    if ((numbytes = sendto(sockfd, "req", strlen("req"), 0,
-			 (struct sockaddr *) &servCaddr, sizeof(servCaddr))) == -1) 
-	{
-		perror("server M to serverC: sendto");
-		exit(1);
-	}
-	//printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-
-    // receive req info
-    // always put following line before recvfrom
-    servCaddr_len = sizeof servCaddr;
-    if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
-        (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
-    {
-        perror("recvfrom");
-        exit(1);
-    }
-    buf[numbytes] = '\0';
-
-    string tempSequenceC(buf);
-    int maxSequenceC = stoi(tempSequenceC, nullptr, 10);
-    if (maxSequenceC > maxSequence)
-    {
-        maxSequence = maxSequenceC;
-    }
-
-    printf("serverM: max sequence is '%s'\n", to_string(maxSequence).c_str());
 
     // END UDP SOCKET
 
@@ -481,6 +488,7 @@ int main(void)
     
 	//printf("server: waiting for connections...\n");
     int counter = 0;
+    int *a = &counter;
 
 	while(1) {  // main accept() loop
         // LISTEN FOR CLIENT A
@@ -686,10 +694,10 @@ int main(void)
                 // SUCCESSFUL TRANSACTION
                 else
                 {
-                    printf("THE CURRENT COUNTER IS %s\n", to_string(counter).c_str());
+                    *a = *a + 1;
+                    printf("THE CURRENT COUNTER IS %s\n", to_string(*a).c_str());
                     results1Balance = results1Balance - amt;
-                    printf("THE CURRENT SEQ NUM IS %s\n", to_string(maxSequence).c_str());
-                    maxSequence = maxSequence + 1;
+                    int maxSequence = findSequenceNumber(sockfd, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len) + 1;
                     string log = "TC " + to_string(maxSequence) + " " + username1 + " " + username2 + " " + to_string(amt);
                     printf("THE CURRENT SEQ NUM IS %s\n", to_string(maxSequence).c_str());
                     

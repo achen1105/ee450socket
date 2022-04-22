@@ -96,7 +96,7 @@ string checkUser(string usrnme)
 }
 
 // Counts the highest sequence number in the block
-int16_t findMaxSequence()
+int findMaxSequence()
 {
 	int maxSequence = 0;
 	int tNum;
@@ -189,27 +189,6 @@ int main(int argc, char *argv[])
 	}
 	//printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
-	// receive request from serverM
-	// always put following line before recvfrom
-	servMaddr_len = sizeof servMaddr;
-	if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
-		(struct sockaddr *) &servMaddr, &servMaddr_len)) == -1) 
-	{
-		perror("recvfrom");
-		exit(1);
-	}
-	buf[numbytes] = '\0';
-	//printf("serverA: received '%s'\n", buf);
-
-	// send req info to serverM
-	if ((numbytes = sendto(sockfd, to_string(findMaxSequence()).c_str(), strlen(to_string(findMaxSequence()).c_str()), 0,
-			(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
-	{
-		perror("server A client socket: sendto");
-		exit(1);
-	}
-	//printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
-
 	// WAIT FOR MESSAGES FROM SERVER M
 	while (1)
 	{
@@ -279,6 +258,19 @@ int main(int argc, char *argv[])
 		{
 			// send req info to serverM
 			if ((numbytes = sendto(sockfd, "ranking", strlen("ranking"), 0,
+					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
+			{
+				perror("server A client socket: sendto");
+				exit(1);
+			}
+			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			printf("The ServerA finished sending the response to the Main Server.\n");
+		}
+		// private check sequence number
+		else if (buf[0] == 'S' && buf[1] == 'Q')
+		{
+			// send req info to serverM
+			if ((numbytes = sendto(sockfd, to_string(findMaxSequence()).c_str(), strlen(to_string(findMaxSequence()).c_str()), 0,
 					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 			{
 				perror("server A client socket: sendto");
