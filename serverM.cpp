@@ -53,6 +53,30 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+// https://www.geeksforgeeks.org/insertion-sort/
+/* Function to sort an array using insertion sort*/
+void insertionSort(string arr[], int n)
+{
+    int i, j;
+    string key, temp;
+    for (i = 1; i < n; i++)
+    {
+        key = arr[i].substr(0, arr[j].find_first_of(" "));
+        temp = arr[i];
+        j = i - 1;
+ 
+        /* Move elements of arr[0..i-1], that are
+        greater than key, to one position ahead
+        of their current position */
+        while (j >= 0 && arr[j].substr(0, arr[j].find_first_of(" ")).compare(key) > 0)
+        {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = temp;
+    }
+}
+
 // https://www.w3schools.com/cpp/cpp_files.asp
 void writeTXLIST(string list, int size)
 {
@@ -60,21 +84,22 @@ void writeTXLIST(string list, int size)
     string lines[size];
     istringstream f(list);
     ofstream myfile("alichain.txt");
+    int index = 0;
 
     while (getline(f, line))
     {
-        //lines[size];
-        myfile << line << '\n';
+        lines[index] = line;
+        // myfile << line << '\n';
+        index++;
     }
-
-    /**
-    std::sort(lines.begin(), lines.end());
+    
+    insertionSort(lines, size);
 
     for (int i = 0; i < size; i++)
     {
         myfile << lines[i] << '\n';
+        //printf("%s \n", lines[i].c_str());
     }
-    */
 
     myfile.close();
 }
@@ -859,7 +884,7 @@ int main(void)
                 txList = txList + temp3;
                 printf("serverM: received '%s'\n", buf);
 
-                writeTXLIST(txList, 20);
+                writeTXLIST(txList, findSequenceNumber(sockfd, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len));
 
                 // SEND REQUESTED INFO MESSAGE TO CLIENT
                 // use buf1 here because it is currently TL code
