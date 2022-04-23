@@ -58,17 +58,18 @@ void *get_in_addr(struct sockaddr *sa)
 void insertionSort(string arr[], int n)
 {
     int i, j;
-    string key, temp;
+    int key = 0;
+    string temp;
     for (i = 1; i < n; i++)
     {
-        key = arr[i].substr(0, arr[j].find_first_of(" "));
+        key = stoi(arr[i].substr(0, arr[i].find_first_of(" ")), nullptr, 10);
         temp = arr[i];
         j = i - 1;
  
         /* Move elements of arr[0..i-1], that are
         greater than key, to one position ahead
         of their current position */
-        while (j >= 0 && arr[j].substr(0, arr[j].find_first_of(" ")).compare(key) > 0)
+        while (j >= 0 && stoi(arr[j].substr(0, arr[j].find_first_of(" ")), nullptr, 10) > key)
         {
             arr[j + 1] = arr[j];
             j = j - 1;
@@ -203,7 +204,7 @@ string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t serv
     int totalBalance = 0;
     int numbytes;
     char buf[MAXDATASIZE];
-    printf("checking wallet for %s\n", usr.c_str());
+    //printf("checking wallet for %s\n", usr.c_str());
 
     // TALK TO SERVER A
     // send req to server A, put buf1 here because want to relay message from CA
@@ -676,8 +677,10 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 string temp3(buf);
                 txList = txList + temp3;
                 //printf("serverM: received '%s'\n", buf);
-
-                writeTXLIST(txList, findSequenceNumber(sockfd, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len));
+                int size = findSequenceNumber(sockfd, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len);
+                writeTXLIST(txList, size);
+                // printf("CONTENT OF ALICHAIN.TXT IS '%s'.\n", txList.c_str());
+                // printf("SIZE OF ALICHAIN.TXT IS '%s'.\n", to_string(size).c_str());
 
                 // SEND REQUESTED INFO MESSAGE TO CLIENT
                 // use buf1 here because it is currently TL code

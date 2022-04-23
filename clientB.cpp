@@ -202,14 +202,14 @@ int main(int argc, char *argv[])
             // successful TXCOINS
             string bal(buf);
             bal = bal.substr(6, string::npos);
-            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :%s alicoins.\n", argv[1], argv[3], argv[2], argv[1], bal.c_str());
+            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is: %s alicoins.\n", argv[1], argv[3], argv[2], argv[1], bal.c_str());
         }
         else if (buf[3]=='I' && buf[4] == 'B') // code IB insufficient balance
         {
             // insufficient balance
             string bal(buf);
             bal = bal.substr(6, string::npos);
-            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :%s alicoins.\n", argv[1], argv[3], argv[2], argv[1], bal.c_str());
+            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is: %s alicoins.\n", argv[1], argv[3], argv[2], argv[1], bal.c_str());
         }
         else if (buf[3]=='O' && buf[4] == 'N') // code ON one client not in network
         {
