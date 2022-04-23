@@ -18,6 +18,8 @@ https://stackoverflow.com/questions/9873061/how-to-set-the-source-port-in-the-ud
 #include <string>
 #include <fstream>
 #include <iostream>
+#include <map>
+#include <utility>
 
 using namespace std;
 
@@ -131,6 +133,67 @@ void writeLog(string tLog)
 	myfile.open("block1.txt", ios::app);
 	myfile << "\n" + tLog;
 }
+
+/**
+// checkStats()
+// https://en.cppreference.com/w/cpp/container/map
+// https://www.cplusplus.com/reference/utility/pair/pair/
+string checkStats(string usrnme)
+{
+	string stats;
+	int tNum;
+	string tUsr1;
+	string tUsr2;
+	int tAmt;
+	// other person, number of transactions, balance
+	// https://stackoverflow.com/questions/2392093/searching-and-inserting-in-a-map-with-3-elements-in-c
+	map< string, pair<int, int> > m;
+
+	ifstream myfile ("block1.txt");
+
+	if (myfile.is_open())
+	{
+		while (myfile >> tNum >> tUsr1 >> tUsr2 >> tAmt)
+		{
+			// username is sender
+			if (usrnme.compare(tUsr1) == 0)
+			{
+				// already in map
+				if (m.find(tUsr2) != m.end())
+				{
+					//m[tUsr2] = make_pair<m[tUsr2].first + 1, m[tUsr2].second + -1*tAmt>;
+					pair <int, int> foo = make_pair<1, 1>;
+					m[tUsr2] = foo;
+				}
+				// not in map
+				else
+				{
+					//m[tUsr2] = make_pair<1, -1*tAmt>;
+				}
+			}
+			// username is receiver
+			else if (usrnme.compare(tUsr2) == 0)
+			{
+				// already in map
+				if (m.find(tUsr1) != m.end())
+				{
+					//m[tUsr1] = make_pair<m[tUsr1].first + 1, m[tUsr1].second + tAmt>;
+				}
+				// not in map
+				else
+				{
+					//m[tUsr1] = make_pair<1, tAmt>;
+				}
+			}
+		}
+
+		myfile.close();
+	}
+
+	else cout << "Unable to open file"; 
+	return stats;
+}
+*/
 
 string txList()
 {
@@ -250,12 +313,16 @@ int main(int argc, char *argv[])
 				perror("server A client socket: sendto");
 				exit(1);
 			}
-			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			//printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
+		/**
 		// STATS ST
 		else if (buf[0] == 'S' && buf[1] == 'T')
 		{
+			string username(buf);
+			username = username.substr(2, string::npos);
+
 			// send req info to serverM
 			if ((numbytes = sendto(sockfd, "ranking", strlen("ranking"), 0,
 					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
@@ -266,6 +333,7 @@ int main(int argc, char *argv[])
 			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
+		*/
 		// private check sequence number
 		else if (buf[0] == 'S' && buf[1] == 'Q')
 		{
@@ -276,7 +344,7 @@ int main(int argc, char *argv[])
 				perror("server A client socket: sendto");
 				exit(1);
 			}
-			printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			// printf("server A: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerA finished sending the response to the Main Server.\n");
 		}
 		else

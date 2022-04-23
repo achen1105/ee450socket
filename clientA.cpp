@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
         {
             perror("send");
         }
-        printf("%s sent a TXLIST request to the main server.\n", argv[1]);
+        printf("%s sent a sorted list request to the main server.\n", argv[1]);
 
         // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE
         if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
@@ -120,8 +120,8 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0'; // ending null char
-        printf("clientA: received '%s'\n",buf);
-        printf("TXLIST is generated.");
+        //printf("clientA: received '%s'\n",buf);
+        printf("Sorted list is generated.");
     }
     // CHECK WALLET; code CW for check wallet
     else if (argc == 2)
@@ -170,7 +170,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0'; // ending null char
-        printf("clientA: received '%s'\n",buf);
+        //printf("clientA: received '%s'\n",buf);
         printf("%s statistics are the following.:”Rank--Username--NumofTransacions--Total\n", argv[1]);
     }
     // TXCOINS CODE TC
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0'; // ending null char
-        printf("clientA: received '%s'\n",buf);
+        // printf("clientA: received '%s'\n",buf);
 
         // TXCOINS SCENARIOS
         if (buf[3]=='S' && buf[4] == 'C') // code SC successful transaction
@@ -202,14 +202,14 @@ int main(int argc, char *argv[])
             // successful TXCOINS
             string bal(buf);
             bal = bal.substr(6, string::npos);
-            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :%s alicoins.", argv[1], argv[3], argv[2], argv[1], bal.c_str());
+            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :%s alicoins.\n", argv[1], argv[3], argv[2], argv[1], bal.c_str());
         }
         else if (buf[3]=='I' && buf[4] == 'B') // code IB insufficient balance
         {
             // insufficient balance
             string bal(buf);
             bal = bal.substr(6, string::npos);
-            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :%s alicoins.", argv[1], argv[3], argv[2], argv[1], bal.c_str());
+            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :%s alicoins.\n", argv[1], argv[3], argv[2], argv[1], bal.c_str());
         }
         else if (buf[3]=='O' && buf[4] == 'N') // code ON one client not in network
         {

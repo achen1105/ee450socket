@@ -7,18 +7,27 @@
 #include <unistd.h>
 #include <errno.h>
 #include <string.h>
-#include <netdb.h>
 #include <sys/types.h>
-#include <netinet/in.h>
 #include <sys/socket.h>
-
+#include <netinet/in.h>
+#include <netdb.h>
 #include <arpa/inet.h>
+#include <sys/wait.h>
+#include <signal.h>
+#include <string>
 
-#define PORT "26421" // the port client will be connecting to 
+using namespace std;
 
-#define MAXDATASIZE 100 // max number of bytes we can get at once 
+#define PORT "26421" // the TCP port client will be connecting to 
+#define MAXDATASIZE 1500 // max number of bytes we can get at once 
 
 // get sockaddr, IPv4 or IPv6:
+/**
+ * @brief Get the in addr object
+ * 
+ * @param sa socket address
+ * @return void* 
+ */
 void *get_in_addr(struct sockaddr *sa)
 {
 	if (sa->sa_family == AF_INET) {
@@ -28,42 +37,49 @@ void *get_in_addr(struct sockaddr *sa)
 	return &(((struct sockaddr_in6*)sa)->sin6_addr);
 }
 
+/**
+ * @brief main function
+ * 
+ * @param argc 2 for TXLIST or CHECKWALLET, 3 for stats, 4 for TXCOINS
+ * @param argv <username> or <username1> <username2> <transfer amount> 
+ * or <username> stats or TXLIST
+ * @return int 0 if successful
+ */
 int main(int argc, char *argv[])
 {
-	int sockfd, numbytes;  
-	char buf[MAXDATASIZE];
+	int sockfd;
 	struct addrinfo hints, *servinfo, *p;
+
+    int numbytes;  
+	char buf[MAXDATASIZE];
 	int rv;
 	char s[INET6_ADDRSTRLEN];
-
-    // WILL BE HANDLED LATER
-    /**
-	if (argc != 2) {
-	    fprintf(stderr,"usage: client <username1>\n");
-	    exit(1);
-	}
-    */
 
 	memset(&hints, 0, sizeof hints);
 	hints.ai_family = AF_UNSPEC;
 	hints.ai_socktype = SOCK_STREAM;
 
-	if ((rv = getaddrinfo("127.0.0.1", PORT, &hints, &servinfo)) != 0) {
+    // save address info in rv
+	if ((rv = getaddrinfo("127.0.0.1", PORT, &hints, &servinfo)) != 0) 
+    {
 		fprintf(stderr, "getaddrinfo: %s\n", gai_strerror(rv));
 		return 1;
 	}
 
 	// loop through all the results and connect to the first we can
-	for(p = servinfo; p != NULL; p = p->ai_next) {
-		if ((sockfd = socket(p->ai_family, p->ai_socktype,
-				p->ai_protocol)) == -1) {
-			perror("client B: socket");
+	for(p = servinfo; p != NULL; p = p->ai_next) 
+    {
+        // create socket
+		if ((sockfd = socket(p->ai_family, p->ai_socktype, p->ai_protocol)) == -1) 
+        {
+			perror("client: socket");
 			continue;
 		}
 
-        // CONNECT ONCE HERE
-		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) {
-			perror("client B: connect");
+        // connect socket
+		if (connect(sockfd, p->ai_addr, p->ai_addrlen) == -1) 
+        {
+			perror("client: connect");
 			close(sockfd);
 			continue;
 		}
@@ -71,31 +87,32 @@ int main(int argc, char *argv[])
 		break;
 	}
 
-	if (p == NULL) {
-		fprintf(stderr, "client B: failed to connect\n");
+    // check if socket is connected
+	if (p == NULL) 
+    {
+		fprintf(stderr, "client: failed to connect\n");
 		return 2;
 	}
 
-	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr),
-			s, sizeof s);
+	inet_ntop(p->ai_family, get_in_addr((struct sockaddr *)p->ai_addr), s, sizeof s);
 	// printf("client: connecting to %s\n", s);
 
 	freeaddrinfo(servinfo); // all done with this structure
 
-    printf("The client B is up and running.\n"); // our own "client connecting to"
+    printf("The client B is up and running.\n"); // our own "client connecting to" message
     // CLIENT DONE WITH ALL CONNECTING HERE
 
-    // START TALKING HERE
+    // START TALKING WITH OTHERS HERE
 
-    // TXLIST
+    // TXLIST, code TL
     if (argc == 2 && strcmp(argv[1],"TXLIST") == 0)
     {
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "clientB send TXLIST to serverM", strlen("clientB send TXLIST to serverM"), 0) == -1)
+        if (send(sockfd, "TL", strlen("TL"), 0) == -1)
         {
             perror("send");
         }
-        printf("%s sent a TXLIST request to the main server.\n", argv[1]);
+        printf("%s sent a sorted list request to the main server.\n", argv[1]);
 
         // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE
         if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
@@ -103,14 +120,16 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0'; // ending null char
-        printf("clientB: received '%s'\n",buf);
-        printf("TXLIST is generated.");
+        //printf("clientB: received '%s'\n",buf);
+        printf("Sorted list is generated.");
     }
-    // CHECK WALLET
+    // CHECK WALLET; code CW for check wallet
     else if (argc == 2)
     {
+        string username(argv[1]);
+        string cwmsg1 = "CW " + username;
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "clientB send CHECKWALLET to serverM", strlen("clientB send CHECKWALLET to serverM"), 0) == -1)
+        if (send(sockfd, cwmsg1.c_str(), strlen(cwmsg1.c_str()), 0) == -1)
         {
             perror("send");
         }
@@ -122,14 +141,24 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0'; // ending null char
-        printf("clientB: received '%s'\n",buf);
-        printf("The current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1]);
+        //printf("clientA: received '%s'\n",buf);
+        string balance_amount = buf;
+        if (balance_amount.compare("F") == 0)
+        {
+            printf("Unable to proceed with the transaction as %s is not part of the network.\n", argv[1]);
+        }
+        else
+        {
+            printf("The current balance of %s is: %s alicoins.\n", argv[1], balance_amount.c_str());
+        }
     }
-    // STATS
+    // STATS code ST
     else if (argc == 3 && strcmp(argv[2],"stats") == 0)
     {
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "clientB send STATS to serverM", strlen("clientB send STATS to serverM"), 0) == -1)
+        string username(argv[2]);
+        string stmsg1 = "ST " + username;
+        if (send(sockfd, stmsg1.c_str(), strlen(stmsg1.c_str()), 0) == -1)
         {
             perror("send");
         }
@@ -141,14 +170,19 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0'; // ending null char
-        printf("clientB: received '%s'\n",buf);
+        //printf("clientA: received '%s'\n",buf);
         printf("%s statistics are the following.:”Rank--Username--NumofTransacions--Total\n", argv[1]);
     }
-    // TXCOINS
+    // TXCOINS CODE TC
     else if (argc == 4)
     {
+        string username1 = argv[1];
+        string username2 = argv[2];
+        string amt = argv[3];
+        string tcmsg1 = "TC " + username1 + " " + username2 + " " + amt;
+
         // SEND MESSAGE TO SERVER
-        if (send(sockfd, "clientB send TXCOINS to serverM", strlen("clientB send TXCOINS to serverM"), 0) == -1)
+        if (send(sockfd, tcmsg1.c_str(), strlen(tcmsg1.c_str()), 0) == -1)
         {
             perror("send");
         }
@@ -160,25 +194,31 @@ int main(int argc, char *argv[])
             exit(1);
         }
         buf[numbytes] = '\0'; // ending null char
-        printf("clientB: received '%s'\n",buf);
+        // printf("clientA: received '%s'\n",buf);
 
         // TXCOINS SCENARIOS
-        if (buf[0]=='1' && buf[1] == '0') // code 1 for txcoins, 0 for successful txcoins
+        if (buf[3]=='S' && buf[4] == 'C') // code SC successful transaction
         {
             // successful TXCOINS
-            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
+            string bal(buf);
+            bal = bal.substr(6, string::npos);
+            printf("%s successfully transferred %s alicoins to %s.\nThe current balance of %s is :%s alicoins.\n", argv[1], argv[3], argv[2], argv[1], bal.c_str());
         }
-        else if (buf[0]=='1' && buf[1] == '1') // code 1 for txcoins, 1 for insufficient balance
+        else if (buf[3]=='I' && buf[4] == 'B') // code IB insufficient balance
         {
             // insufficient balance
-            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :<BALANCE_AMOUNT> alicoins.", argv[1], argv[3], argv[2], argv[1]);
+            string bal(buf);
+            bal = bal.substr(6, string::npos);
+            printf("%s was unable to transfer %s alicoins to %s because of insufficient balance. The current balance of %s is :%s alicoins.\n", argv[1], argv[3], argv[2], argv[1], bal.c_str());
         }
-        else if (buf[0]=='1' && buf[1] == '2') // code 1 for txcoins, 1 client not in network
+        else if (buf[3]=='O' && buf[4] == 'N') // code ON one client not in network
         {
             // 1 not in network
-            printf("Unable to proceed with the transaction as <SENDER_USERNAME/RECEIVER_USERNAME> is not part of the network.");
+            string userNAN(buf);
+            userNAN = userNAN.substr(6, string::npos);
+            printf("Unable to proceed with the transaction as %s is not part of the network.", userNAN.c_str());
         }
-        else if (buf[0]=='1' && buf[1] == '3') // code 1 for txcoins, 2 clients not in network
+        else if (buf[3]=='B' && buf[4] == 'N') // code BN both clients not in network
         {
             // 2 not in network
             printf("Unable to proceed with the transaction as %s and %s are not part of the network.", argv[1], argv[2]);
@@ -186,7 +226,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        fprintf(stderr,"clientB usage: ./clientB <username1> or ./clientB <username1> <username2> <transfer amount>\n");
+        fprintf(stderr,"clientA usage: ./clientA <username1> or ./clientA <username1> <username2> <transfer amount>\n");
 	    exit(1);
     }
 

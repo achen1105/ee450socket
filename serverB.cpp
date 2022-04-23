@@ -250,7 +250,7 @@ int main(int argc, char *argv[])
 				perror("server B client socket: sendto");
 				exit(1);
 			}
-			printf("server B: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			//printf("server B: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerB finished sending the response to the Main Server.\n");
 		}
 		// STATS ST
@@ -263,7 +263,7 @@ int main(int argc, char *argv[])
 				perror("server B client socket: sendto");
 				exit(1);
 			}
-			printf("server B: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			//printf("server B: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerB finished sending the response to the Main Server.\n");
 		}
 		// private check sequence number
@@ -276,7 +276,7 @@ int main(int argc, char *argv[])
 				perror("server B client socket: sendto");
 				exit(1);
 			}
-			printf("server B: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			//printf("server B: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 			printf("The ServerB finished sending the response to the Main Server.\n");
 		}
 		else

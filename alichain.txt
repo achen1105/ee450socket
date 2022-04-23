@@ -1,4 +1,7 @@
 1 Racheal John 45
+12 Ali Racheal 1
+11 Martin Luke 100
+10 Martin Luke 100
 2 Rishil Alice 30
 3 Oliver Rachit 9410
 4 Ben Victor 85
