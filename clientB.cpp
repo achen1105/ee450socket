@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
         {
             perror("send");
         }
-        printf("%s sent a sorted list request to the main server.\n", argv[1]);
+        printf("%s sent a sorted list request to the main server.\n", "Client B");
 
         // CLIENT RECEIVES MESSAGE FROM SERVER THEN DONE
         if ((numbytes = recv(sockfd, buf, MAXDATASIZE-1, 0)) == -1) {
@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0'; // ending null char
         //printf("clientB: received '%s'\n",buf);
-        printf("Sorted list is generated.");
+        printf("Sorted list was generated.");
     }
     // CHECK WALLET; code CW for check wallet
     else if (argc == 2)
