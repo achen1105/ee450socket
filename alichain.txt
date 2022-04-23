@@ -7,7 +7,3 @@
 7 Martin Luke 25
 8 Rishil Chinmay 10
 9 Ali Luke 155
-10 Martin Ali 1
-11 Racheal Luke 2
-12 Ben Alice 3
-13 Rishil Victor 4

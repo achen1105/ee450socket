@@ -145,7 +145,7 @@ int main(int argc, char *argv[])
         string balance_amount = buf;
         if (balance_amount.compare("F") == 0)
         {
-            printf("Unable to proceed with the transaction as %s is not part of the network.\n", argv[1]);
+            printf("Unable to proceed with the request as %s is not part of the network.\n", argv[1]);
         }
         else
         {
