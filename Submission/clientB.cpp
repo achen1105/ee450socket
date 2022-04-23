@@ -121,7 +121,7 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0'; // ending null char
         //printf("clientB: received '%s'\n",buf);
-        printf("Sorted list was generated.");
+        printf("Sorted list was generated.\n");
     }
     // CHECK WALLET; code CW for check wallet
     else if (argc == 2)
