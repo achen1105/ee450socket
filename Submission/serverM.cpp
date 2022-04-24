@@ -33,15 +33,13 @@ using namespace std;
 
 // C++11 has stoi, vm does not
 // https://stackoverflow.com/questions/19311641/c-string-to-int-without-using-atoi-or-stoi
-int stoi(const char *s)
+// https://www.geeksforgeeks.org/converting-strings-numbers-cc/
+int stoint(string s)
 {
     int i = 0;
 
-    while(*s >= '0' && *s <= '9')
-    {
-        i = i * 10 + (*s - '0');
-        s++;
-    }
+    stringstream temp(s);
+    temp >> i;
     return i;
 }
 
@@ -51,7 +49,7 @@ string to_string(int x, int y)
 {
   // int y not used, just to suppress overload warnings
   int length = snprintf( NULL, 0, "%d", x );
-  assert( length >= 0 );
+  // assert( length >= 0 );
   char* buf = new char[length + 1];
   snprintf( buf, length + 1, "%d", x );
   std::string str( buf );
@@ -90,14 +88,14 @@ void insertionSort(string arr[], int n)
     string temp;
     for (i = 1; i < n; i++)
     {
-        key = stoi(arr[i].substr(0, arr[i].find_first_of(" ")));
+        key = stoint(arr[i].substr(0, arr[i].find_first_of(" ")));
         temp = arr[i];
         j = i - 1;
  
         /* Move elements of arr[0..i-1], that are
         greater than key, to one position ahead
         of their current position */
-        while (j >= 0 && stoi(arr[j].substr(0, arr[j].find_first_of(" "))) > key)
+        while (j >= 0 && stoint(arr[j].substr(0, arr[j].find_first_of(" "))) > key)
         {
             arr[j + 1] = arr[j];
             j = j - 1;
@@ -161,7 +159,7 @@ int findSequenceNumber(int sockfd, sockaddr_in servAaddr, socklen_t servAaddr_le
     buf[numbytes] = '\0';
 
     string tempSequenceA(buf);
-    int maxSequenceA = stoi(tempSequenceA);
+    int maxSequenceA = stoint(tempSequenceA);
     if (maxSequenceA > maxSequence)
     {
         maxSequence = maxSequenceA;
@@ -188,7 +186,7 @@ int findSequenceNumber(int sockfd, sockaddr_in servAaddr, socklen_t servAaddr_le
     buf[numbytes] = '\0';
 
     string tempSequenceB(buf);
-    int maxSequenceB = stoi(tempSequenceB);
+    int maxSequenceB = stoint(tempSequenceB);
     if (maxSequenceB > maxSequence)
     {
         maxSequence = maxSequenceB;
@@ -216,7 +214,7 @@ int findSequenceNumber(int sockfd, sockaddr_in servAaddr, socklen_t servAaddr_le
     buf[numbytes] = '\0';
 
     string tempSequenceC(buf);
-    int maxSequenceC = stoi(tempSequenceC);
+    int maxSequenceC = stoint(tempSequenceC);
     if (maxSequenceC > maxSequence)
     {
         maxSequence = maxSequenceC;
@@ -260,7 +258,7 @@ string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t serv
     string balanceA(buf);
     string statusA = balanceA.substr(0, 1);
     balanceA = balanceA.substr(2, string::npos);
-    totalBalance = totalBalance + stoi(balanceA);
+    totalBalance = totalBalance + stoint(balanceA);
     printf("The main server received the feedback from server A using UDP over port %s.\n", PORTSA);
 
     // TALK TO SERVER B
@@ -289,7 +287,7 @@ string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t serv
     string balanceB(buf);
     string statusB = balanceB.substr(0, 1);
     balanceB = balanceB.substr(2, string::npos);
-    totalBalance = totalBalance + stoi(balanceB);
+    totalBalance = totalBalance + stoint(balanceB);
     printf("The main server received the feedback from server B using UDP over port %s.\n", PORTSB);
 
     // TALK TO SERVER C
@@ -318,7 +316,7 @@ string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t serv
     string balanceC(buf);
     string statusC = balanceC.substr(0, 1);
     balanceC = balanceC.substr(2, string::npos);
-    totalBalance = totalBalance + stoi(balanceC);
+    totalBalance = totalBalance + stoint(balanceC);
     printf("The main server received the feedback from server C using UDP over port %s.\n", PORTSC);
 
     // add initial balance
@@ -409,7 +407,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 string balanceA(buf);
                 string statusA = balanceA.substr(0, 1);
                 balanceA = balanceA.substr(2, string::npos);
-                totalBalance = totalBalance + stoi(balanceA);
+                totalBalance = totalBalance + stoint(balanceA);
 
                 // TALK TO SERVER B
                 // send req to server B, put buf1 here because want to relay message from CA
@@ -437,7 +435,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 string balanceB(buf);
                 string statusB = balanceB.substr(0, 1);
                 balanceB = balanceB.substr(2, string::npos);
-                totalBalance = totalBalance + stoi(balanceB);
+                totalBalance = totalBalance + stoint(balanceB);
 
                 // TALK TO SERVER C
                 // send req to server C, put buf1 here because want to relay message from CA
@@ -465,7 +463,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 string balanceC(buf);
                 string statusC = balanceC.substr(0, 1);
                 balanceC = balanceC.substr(2, string::npos);
-                totalBalance = totalBalance + stoi(balanceC);
+                totalBalance = totalBalance + stoint(balanceC);
 
                 // add initial balance
                 totalBalance = 1000 + totalBalance;
@@ -499,7 +497,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 // save username2
                 string username2 = username1;
                 // amount
-                int amt = stoi(username1.substr(username1.find_last_of(" ") + 1, string::npos));
+                int amt = stoint(username1.substr(username1.find_last_of(" ") + 1, string::npos));
                 username1 = username1.substr(0, username1.find_first_of(" "));
                 username2 = username2.substr(username2.find_first_of(" ") + 1, string::npos);
                 username2 = username2.substr(0, username2.find_first_of(" "));
@@ -508,7 +506,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
 
                 string results1 = checkWallet(sockfd, username1, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len);
                 string results2 = checkWallet(sockfd, username2, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len);
-                int results1Balance = stoi(results1.substr(2, string::npos));
+                int results1Balance = stoint(results1.substr(2, string::npos));
 
                 // BOTH NOT IN NETWORK
                 if (results1.substr(0, 1).compare("F") == 0 && results2.substr(0,1).compare("F") == 0)

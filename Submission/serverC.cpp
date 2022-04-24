@@ -17,6 +17,7 @@ https://stackoverflow.com/questions/9873061/how-to-set-the-source-port-in-the-ud
 #include <signal.h>
 #include <string>
 #include <fstream>
+#include <sstream>
 #include <iostream>
 
 using namespace std;
@@ -27,15 +28,13 @@ using namespace std;
 
 // C++11 has stoi, vm does not
 // https://stackoverflow.com/questions/19311641/c-string-to-int-without-using-atoi-or-stoi
-int stoi(const char *s)
+// https://www.geeksforgeeks.org/converting-strings-numbers-cc/
+int stoint(string s)
 {
     int i = 0;
 
-    while(*s >= '0' && *s <= '9')
-    {
-        i = i * 10 + (*s - '0');
-        s++;
-    }
+    stringstream temp(s);
+    temp >> i;
     return i;
 }
 
@@ -45,7 +44,7 @@ string to_string(int x, int y)
 {
   // int y not used, just to suppress overload warnings
   int length = snprintf( NULL, 0, "%d", x );
-  assert( length >= 0 );
+  // assert( length >= 0 );
   char* buf = new char[length + 1];
   snprintf( buf, length + 1, "%d", x );
   std::string str( buf );
