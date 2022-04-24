@@ -8,15 +8,16 @@ Phases 1 through 3 are complete (all parts of the project are complete except th
 d) 
 README.md - project information
 makefile - the makefile for the project (includes 'make all')
-block1.txt - provided first block for serverA
-block2.txt - provided second block for serverB
-block3.txt - provided third block for serverC
 serverM.cpp - runs server M ('./serverM')
 serverA.cpp - runs server A ('./serverA')
 serverB.cpp - runs server B ('./serverB')
 serverC.cpp - runs server C ('./serverC')
 clientA.cpp - runs client A ('./clientA <username>')
 clientB.cpp - runs client B ('./clientB <username>')
+block1.txt - provided first block for serverA (not included)
+block2.txt - provided second block for serverB (not included)
+block3.txt - provided third block for serverC (not included)
+alichain.txt - list generated after running TXLIST command (not included)
 
 e) 
 SERVER M
