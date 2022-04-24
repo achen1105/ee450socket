@@ -21,6 +21,34 @@ using namespace std;
 #define PORT "25421" // the TCP port client will be connecting to 
 #define MAXDATASIZE 1500 // max number of bytes we can get at once 
 
+// C++11 has stoi, vm does not
+// https://stackoverflow.com/questions/19311641/c-string-to-int-without-using-atoi-or-stoi
+int stoi(const char *s)
+{
+    int i = 0;
+
+    while(*s >= '0' && *s <= '9')
+    {
+        i = i * 10 + (*s - '0');
+        s++;
+    }
+    return i;
+}
+
+// C++11 has to_string, vm does not
+// https://stackoverflow.com/questions/4668760/converting-an-int-to-stdstring
+string to_string(int x, int y)
+{
+  // int y not used, just to suppress overload warnings
+  int length = snprintf( NULL, 0, "%d", x );
+  assert( length >= 0 );
+  char* buf = new char[length + 1];
+  snprintf( buf, length + 1, "%d", x );
+  std::string str( buf );
+  delete[] buf;
+  return str;
+}
+
 // get sockaddr, IPv4 or IPv6:
 /**
  * @brief Get the in addr object

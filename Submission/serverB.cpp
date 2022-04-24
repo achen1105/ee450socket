@@ -25,6 +25,34 @@ using namespace std;
 #define SERVERBPORT "22421" // the source port
 #define MAXDATASIZE 1500 // max number of bytes we can get at once (from TCP clients and UDP clients)
 
+// C++11 has stoi, vm does not
+// https://stackoverflow.com/questions/19311641/c-string-to-int-without-using-atoi-or-stoi
+int stoi(const char *s)
+{
+    int i = 0;
+
+    while(*s >= '0' && *s <= '9')
+    {
+        i = i * 10 + (*s - '0');
+        s++;
+    }
+    return i;
+}
+
+// C++11 has to_string, vm does not
+// https://stackoverflow.com/questions/4668760/converting-an-int-to-stdstring
+string to_string(int x, int y)
+{
+  // int y not used, just to suppress overload warnings
+  int length = snprintf( NULL, 0, "%d", x );
+  assert( length >= 0 );
+  char* buf = new char[length + 1];
+  snprintf( buf, length + 1, "%d", x );
+  std::string str( buf );
+  delete[] buf;
+  return str;
+}
+
 // https://www.cplusplus.com/doc/tutorial/files/
 // https://stackoverflow.com/questions/20372661/read-word-by-word-from-file-in-c
 int checkWallet(string usrnme)
@@ -210,7 +238,7 @@ int main(int argc, char *argv[])
 		{
 			string username(buf);
 			username = username.substr(3, string::npos);
-			string usernameBalance = checkUser(username) + " " + to_string(checkWallet(username));
+			string usernameBalance = checkUser(username) + " " + to_string(checkWallet(username), 0);
 
 			// send req info to serverM
 			if ((numbytes = sendto(sockfd, usernameBalance.c_str(), strlen(usernameBalance.c_str()), 0,
@@ -270,7 +298,7 @@ int main(int argc, char *argv[])
 		else if (buf[0] == 'S' && buf[1] == 'Q')
 		{
 			// send req info to serverM
-			if ((numbytes = sendto(sockfd, to_string(findMaxSequence()).c_str(), strlen(to_string(findMaxSequence()).c_str()), 0,
+			if ((numbytes = sendto(sockfd, to_string(findMaxSequence(), 0).c_str(), strlen(to_string(findMaxSequence(), 0).c_str()), 0,
 					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 			{
 				perror("server B client socket: sendto");
@@ -283,7 +311,7 @@ int main(int argc, char *argv[])
 		{
 			// extra check wallet and check user to go with private method in serverM
 			string username(buf);
-			string usernameBalance = checkUser(username) + " " + to_string(checkWallet(username));
+			string usernameBalance = checkUser(username) + " " + to_string(checkWallet(username), 0);
 
 			// send req info to serverM
 			if ((numbytes = sendto(sockfd, usernameBalance.c_str(), strlen(usernameBalance.c_str()), 0,

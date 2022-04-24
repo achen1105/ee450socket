@@ -31,6 +31,34 @@ using namespace std;
 #define BACKLOG 10	 // how many pending connections queue will hold (TCP clients)
 #define MAXDATASIZE 1500 // max number of bytes we can get at once (from TCP clients and UDP clients)
 
+// C++11 has stoi, vm does not
+// https://stackoverflow.com/questions/19311641/c-string-to-int-without-using-atoi-or-stoi
+int stoi(const char *s)
+{
+    int i = 0;
+
+    while(*s >= '0' && *s <= '9')
+    {
+        i = i * 10 + (*s - '0');
+        s++;
+    }
+    return i;
+}
+
+// C++11 has to_string, vm does not
+// https://stackoverflow.com/questions/4668760/converting-an-int-to-stdstring
+string to_string(int x, int y)
+{
+  // int y not used, just to suppress overload warnings
+  int length = snprintf( NULL, 0, "%d", x );
+  assert( length >= 0 );
+  char* buf = new char[length + 1];
+  snprintf( buf, length + 1, "%d", x );
+  std::string str( buf );
+  delete[] buf;
+  return str;
+}
+
 void sigchld_handler(int s)
 {
 	(void)s; // quiet unused variable warning
@@ -62,14 +90,14 @@ void insertionSort(string arr[], int n)
     string temp;
     for (i = 1; i < n; i++)
     {
-        key = stoi(arr[i].substr(0, arr[i].find_first_of(" ")), nullptr, 10);
+        key = stoi(arr[i].substr(0, arr[i].find_first_of(" ")));
         temp = arr[i];
         j = i - 1;
  
         /* Move elements of arr[0..i-1], that are
         greater than key, to one position ahead
         of their current position */
-        while (j >= 0 && stoi(arr[j].substr(0, arr[j].find_first_of(" ")), nullptr, 10) > key)
+        while (j >= 0 && stoi(arr[j].substr(0, arr[j].find_first_of(" "))) > key)
         {
             arr[j + 1] = arr[j];
             j = j - 1;
@@ -133,7 +161,7 @@ int findSequenceNumber(int sockfd, sockaddr_in servAaddr, socklen_t servAaddr_le
     buf[numbytes] = '\0';
 
     string tempSequenceA(buf);
-    int maxSequenceA = stoi(tempSequenceA, nullptr, 10);
+    int maxSequenceA = stoi(tempSequenceA);
     if (maxSequenceA > maxSequence)
     {
         maxSequence = maxSequenceA;
@@ -160,7 +188,7 @@ int findSequenceNumber(int sockfd, sockaddr_in servAaddr, socklen_t servAaddr_le
     buf[numbytes] = '\0';
 
     string tempSequenceB(buf);
-    int maxSequenceB = stoi(tempSequenceB, nullptr, 10);
+    int maxSequenceB = stoi(tempSequenceB);
     if (maxSequenceB > maxSequence)
     {
         maxSequence = maxSequenceB;
@@ -188,7 +216,7 @@ int findSequenceNumber(int sockfd, sockaddr_in servAaddr, socklen_t servAaddr_le
     buf[numbytes] = '\0';
 
     string tempSequenceC(buf);
-    int maxSequenceC = stoi(tempSequenceC, nullptr, 10);
+    int maxSequenceC = stoi(tempSequenceC);
     if (maxSequenceC > maxSequence)
     {
         maxSequence = maxSequenceC;
@@ -232,7 +260,7 @@ string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t serv
     string balanceA(buf);
     string statusA = balanceA.substr(0, 1);
     balanceA = balanceA.substr(2, string::npos);
-    totalBalance = totalBalance + stoi(balanceA, nullptr, 10);
+    totalBalance = totalBalance + stoi(balanceA);
     printf("The main server received the feedback from server A using UDP over port %s.\n", PORTSA);
 
     // TALK TO SERVER B
@@ -261,7 +289,7 @@ string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t serv
     string balanceB(buf);
     string statusB = balanceB.substr(0, 1);
     balanceB = balanceB.substr(2, string::npos);
-    totalBalance = totalBalance + stoi(balanceB, nullptr, 10);
+    totalBalance = totalBalance + stoi(balanceB);
     printf("The main server received the feedback from server B using UDP over port %s.\n", PORTSB);
 
     // TALK TO SERVER C
@@ -290,7 +318,7 @@ string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t serv
     string balanceC(buf);
     string statusC = balanceC.substr(0, 1);
     balanceC = balanceC.substr(2, string::npos);
-    totalBalance = totalBalance + stoi(balanceC, nullptr, 10);
+    totalBalance = totalBalance + stoi(balanceC);
     printf("The main server received the feedback from server C using UDP over port %s.\n", PORTSC);
 
     // add initial balance
@@ -301,7 +329,7 @@ string checkWallet(int sockfd, string usr, sockaddr_in servAaddr, socklen_t serv
     {
         return "F 0";
     }
-    return "T " + to_string(totalBalance);
+    return "T " + to_string(totalBalance, 0);
 }
 
 void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int numbytes1, char s1[], char buf[], char buf1[], socklen_t sin_size1, sockaddr_storage their_addr1, sockaddr_in servAaddr, socklen_t servAaddr_len, sockaddr_in servBaddr, socklen_t servBaddr_len, sockaddr_in servCaddr, socklen_t servCaddr_len, string client, string portNum)
@@ -381,7 +409,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 string balanceA(buf);
                 string statusA = balanceA.substr(0, 1);
                 balanceA = balanceA.substr(2, string::npos);
-                totalBalance = totalBalance + stoi(balanceA, nullptr, 10);
+                totalBalance = totalBalance + stoi(balanceA);
 
                 // TALK TO SERVER B
                 // send req to server B, put buf1 here because want to relay message from CA
@@ -409,7 +437,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 string balanceB(buf);
                 string statusB = balanceB.substr(0, 1);
                 balanceB = balanceB.substr(2, string::npos);
-                totalBalance = totalBalance + stoi(balanceB, nullptr, 10);
+                totalBalance = totalBalance + stoi(balanceB);
 
                 // TALK TO SERVER C
                 // send req to server C, put buf1 here because want to relay message from CA
@@ -437,7 +465,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 string balanceC(buf);
                 string statusC = balanceC.substr(0, 1);
                 balanceC = balanceC.substr(2, string::npos);
-                totalBalance = totalBalance + stoi(balanceC, nullptr, 10);
+                totalBalance = totalBalance + stoi(balanceC);
 
                 // add initial balance
                 totalBalance = 1000 + totalBalance;
@@ -453,7 +481,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 else
                 {
                     // SEND REQUESTED INFO MESSAGE TO CLIENT
-                    if (send(new_fd1, to_string(totalBalance).c_str(), strlen(to_string(totalBalance).c_str()), 0) == -1)
+                    if (send(new_fd1, to_string(totalBalance, 0).c_str(), strlen(to_string(totalBalance, 0).c_str()), 0) == -1)
                     {
                         perror("send");
                     }
@@ -471,16 +499,16 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 // save username2
                 string username2 = username1;
                 // amount
-                int amt = stoi(username1.substr(username1.find_last_of(" ") + 1, string::npos), nullptr, 10);
+                int amt = stoi(username1.substr(username1.find_last_of(" ") + 1, string::npos));
                 username1 = username1.substr(0, username1.find_first_of(" "));
                 username2 = username2.substr(username2.find_first_of(" ") + 1, string::npos);
                 username2 = username2.substr(0, username2.find_first_of(" "));
 
-                printf("The main server received from %s to transfer %s coins to %s using TCP over port %s.\n", username1.c_str(), to_string(amt).c_str(), username2.c_str(), portNum.c_str());
+                printf("The main server received from %s to transfer %s coins to %s using TCP over port %s.\n", username1.c_str(), to_string(amt, 0).c_str(), username2.c_str(), portNum.c_str());
 
                 string results1 = checkWallet(sockfd, username1, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len);
                 string results2 = checkWallet(sockfd, username2, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len);
-                int results1Balance = stoi(results1.substr(2, string::npos), nullptr, 10);
+                int results1Balance = stoi(results1.substr(2, string::npos));
 
                 // BOTH NOT IN NETWORK
                 if (results1.substr(0, 1).compare("F") == 0 && results2.substr(0,1).compare("F") == 0)
@@ -514,7 +542,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 // INSUFFICIENT BALANCE
                 else if (results1Balance < amt)
                 {
-                    string msgTCIB = "TC IB " + to_string(results1Balance);
+                    string msgTCIB = "TC IB " + to_string(results1Balance, 0);
                     // SEND REQUESTED INFO MESSAGE TO CLIENT
                     if (send(new_fd1, msgTCIB.c_str(), strlen(msgTCIB.c_str()), 0) == -1)
                     {
@@ -526,7 +554,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                 {
                     results1Balance = results1Balance - amt;
                     int maxSequence = findSequenceNumber(sockfd, servAaddr, servAaddr_len, servBaddr, servBaddr_len, servCaddr, servCaddr_len) + 1;
-                    string log = "TC " + to_string(maxSequence) + " " + username1 + " " + username2 + " " + to_string(amt);
+                    string log = "TC " + to_string(maxSequence, 0) + " " + username1 + " " + username2 + " " + to_string(amt, 0);
                     //printf("THE CURRENT SEQ NUM IS %s\n", to_string(maxSequence).c_str());
                     
                     // https://stackoverflow.com/questions/9711076/why-does-rand-always-return-the-same-value
@@ -596,7 +624,7 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                         buf[numbytes] = '\0';
                     }
 
-                    string msgTCSC = "TC SC " + to_string(results1Balance);
+                    string msgTCSC = "TC SC " + to_string(results1Balance, 0);
                     // SEND REQUESTED INFO MESSAGE TO CLIENT
                     if (send(new_fd1, msgTCSC.c_str(), strlen(msgTCSC.c_str()), 0) == -1)
                     {
