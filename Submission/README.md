@@ -3,7 +3,7 @@ a) Anita Chen
 b) achen999 4361009421
 
 c) EE 450 Spring 2022 Socket Project
-Phases 1 through 3 are complete (all parts of the project are complete except the optional Phase 4 stats command).
+Phases 1 through 4 are complete.
 
 d) 
 README.md - project information
