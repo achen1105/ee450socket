@@ -1,6 +1,8 @@
 /*
 ** talker.c -- a datagram "client" demo
 https://stackoverflow.com/questions/9873061/how-to-set-the-source-port-in-the-udp-socket-in-c
+https://beej.us/guide/bgnet/html/
+    ONLY REFERENCED THE STRUCTURE
 */
 
 #include <stdio.h>
@@ -19,6 +21,8 @@ https://stackoverflow.com/questions/9873061/how-to-set-the-source-port-in-the-ud
 #include <fstream>
 #include <sstream>
 #include <iostream>
+#include <map>
+#include <utility>
 
 using namespace std;
 
@@ -179,6 +183,78 @@ string txList()
 	return list;
 }
 
+// checkStats()
+// https://en.cppreference.com/w/cpp/container/map
+// https://www.cplusplus.com/reference/utility/pair/pair/
+string checkStats(string usrnme)
+{
+	string stats;
+	int tNum;
+	string tUsr1;
+	string tUsr2;
+	int tAmt;
+	// other person, number of transactions, balance
+	// https://stackoverflow.com/questions/2392093/searching-and-inserting-in-a-map-with-3-elements-in-c
+	map<string, int> count;
+	map<string, int> balance;
+
+	ifstream myfile ("block3.txt");
+
+	if (myfile.is_open())
+	{
+		while (myfile >> tNum >> tUsr1 >> tUsr2 >> tAmt)
+		{
+			//printf("%s, %s, %s", usrnme.c_str(), tUsr1.c_str(), tUsr2.c_str());
+			// username is sender
+			if (usrnme.compare(tUsr1) == 0)
+			{
+				// already in map
+				if (count.find(tUsr2) != count.end())
+				{
+					count[tUsr2] = count[tUsr2] + 1;
+					balance[tUsr2] = balance[tUsr2] - tAmt;
+				}
+				// not in map
+				else
+				{
+					count[tUsr2] = 1;
+					balance[tUsr2] = -1 * tAmt;
+				}
+			}
+			// username is receiver
+			else if (usrnme.compare(tUsr2) == 0)
+			{
+				// already in map
+				if (count.find(tUsr1) != count.end())
+				{
+					count[tUsr1] = count[tUsr1] + 1;
+					balance[tUsr1] = balance[tUsr1] + tAmt;
+				}
+				// not in map
+				else
+				{
+					count[tUsr1] = 1;
+					balance[tUsr1] =  tAmt;
+				}
+			}
+		}
+
+		myfile.close();
+	}
+
+	else cout << "Unable to open file"; 
+
+	// https://www.cplusplus.com/reference/map/map/begin/
+	for (map<string,int>::iterator it=count.begin(); it!=count.end(); ++it)
+	{
+		int bal = balance[it->first];
+		// username, count, balance
+		stats = stats + it->first + " " + to_string(it->second, 0) + " " + to_string(bal, 0) + '\n';
+	}
+    
+	return stats;
+}
+
 int main(int argc, char *argv[])
 {
 	int sockfd; // main serverA socket to send and receive
@@ -283,14 +359,20 @@ int main(int argc, char *argv[])
 		// STATS ST
 		else if (buf[0] == 'S' && buf[1] == 'T')
 		{
+			string username(buf);
+			username = username.substr(3, string::npos);
+
+			string rankingC = checkStats(username);
+
 			// send req info to serverM
-			if ((numbytes = sendto(sockfd, "ranking", strlen("ranking"), 0,
+			if ((numbytes = sendto(sockfd, rankingC.c_str(), strlen(rankingC.c_str()), 0,
 					(struct sockaddr *) &servMaddr, sizeof(servMaddr))) == -1) 
 			{
 				perror("server C client socket: sendto");
 				exit(1);
 			}
 			//printf("server C: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+			//printf("The ServerC sent %s.\n", rankingC.c_str());
 			printf("The ServerC finished sending the response to the Main Server.\n");
 		}
 		// private check sequence number

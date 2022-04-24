@@ -1,5 +1,6 @@
 /*
-** server.c -- a stream socket server demo
+** server.c -- a stream socket server demo https://beej.us/guide/bgnet/html/
+    ONLY REFERENCED THE STRUCTURE
 */
 
 #include <stdio.h>
@@ -18,6 +19,8 @@
 #include <fstream>
 #include <iostream>
 #include <sstream>
+#include <map>
+#include <utility>
 
 using namespace std;
 
@@ -104,6 +107,34 @@ void insertionSort(string arr[], int n)
     }
 }
 
+// https://www.geeksforgeeks.org/insertion-sort/
+// Sort transactions
+void insertionSortTransactions(string arr[], int n)
+{
+    int i, j;
+    int key = 0;
+    string temp;
+    for (i = 1; i < n; i++)
+    {   
+        string middle = arr[i].substr(0, arr[i].find_last_of(" "));
+        key = stoint(middle.substr(middle.find_first_of(" "), string::npos));
+        temp = arr[i];
+        j = i - 1;
+ 
+        /* Move elements of arr[0..i-1], that are
+        less than key, to one position ahead
+        of their current position */
+        string middleCheck = arr[j].substr(0, arr[j].find_last_of(" "));
+        int middleCheckFinal = stoint(middleCheck.substr(middleCheck.find_first_of(" "), string::npos));
+        while (j >= 0 &&  middleCheckFinal < key)
+        {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = temp;
+    }
+}
+
 // https://www.w3schools.com/cpp/cpp_files.asp
 void writeTXLIST(string list, int size)
 {
@@ -129,6 +160,60 @@ void writeTXLIST(string list, int size)
     }
 
     myfile.close();
+}
+
+string getStats(string list)
+{
+    string statsLine = "";
+    int index = 0;
+    string finalStats = "";
+
+    map<string, int> count;
+    map<string, int> balance;
+
+    string username = "";
+    int ct = 0;
+    int bal = 0;
+
+    istringstream f(list);
+
+    // initialize map out of order
+    while (f >> username >> ct >> bal)
+    {
+        // username is already in the map
+        if (count.find(username) != count.end())
+        {
+            count[username] = count[username] + ct;
+            balance[username] = balance[username] + bal;
+        }
+        // add username
+        else
+        {
+            count[username] = ct;
+            balance[username] = bal;
+        }
+    }
+    string statsArray[count.size()];
+
+    // https://www.cplusplus.com/reference/map/map/begin/
+	for (map<string,int>::iterator it=count.begin(); it!=count.end(); ++it)
+	{
+		int currentBal = balance[it->first];
+		// username, count, balance
+		statsLine = it->first + " " + to_string(it->second, 0) + " " + to_string(currentBal, 0);
+        statsArray[index] = statsLine;
+        index++;
+	}
+
+    insertionSortTransactions(statsArray, count.size());
+
+    for (int i = 0; i < count.size(); i++)
+    {
+        int rank = i + 1;
+        finalStats = finalStats + to_string(rank, 0) + " " + statsArray[i] + "\n";
+    }
+    
+    return finalStats;
 }
 
 // "F if not found, then int balance"
@@ -720,15 +805,19 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
             // STATS code ST
             else if (buf1[0] == 'S' && buf1[1] == 'T')
             {
+                string listUnranked = "";
+                string listRanked = "";
+                string username(buf);
+                username = username.substr(3, string::npos);
+
                 // TALK TO SERVER A
-                // send req to server A, put buf1 here because want to relay message from CA
                 if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
                         (struct sockaddr *) &servAaddr, sizeof(servAaddr))) == -1) 
                 {
                     perror("server M to serverA: sendto");
                     exit(1);
                 }
-                printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+                //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
 
                 // receive req info from A and store in buf
                 // always put following line before recvfrom
@@ -740,14 +829,64 @@ void serverMOperations(int sockfd, int sockfd1, int new_fd1, int numbytes, int n
                     exit(1);
                 }
                 buf[numbytes] = '\0';
-                printf("serverM: received '%s'\n", buf);
+                string listA(buf);
+                listUnranked = listUnranked + listA;
+                //printf("serverM: received '%s'\n", buf);
+
+                // TALK TO SERVER B
+                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
+                        (struct sockaddr *) &servBaddr, sizeof(servBaddr))) == -1) 
+                {
+                    perror("server M to serverB: sendto");
+                    exit(1);
+                }
+                //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+                // receive req info from B and store in buf
+                // always put following line before recvfrom
+                servBaddr_len = sizeof servBaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servBaddr, &servBaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                string listB(buf);
+                listUnranked = listUnranked + listB;
+                //printf("serverM: received '%s'\n", buf);
+                
+                // TALK TO SERVER C
+                if ((numbytes = sendto(sockfd, buf1, strlen(buf1), 0,
+                        (struct sockaddr *) &servCaddr, sizeof(servCaddr))) == -1) 
+                {
+                    perror("server M to serverC: sendto");
+                    exit(1);
+                }
+                //printf("server M: sent %d bytes to %s\n", numbytes, "127.0.0.1");
+
+                // receive req info from C and store in buf
+                // always put following line before recvfrom
+                servCaddr_len = sizeof servCaddr;
+                if ((numbytes = recvfrom(sockfd, buf, MAXDATASIZE-1 , 0,
+                    (struct sockaddr *) &servCaddr, &servCaddr_len)) == -1) 
+                {
+                    perror("recvfrom");
+                    exit(1);
+                }
+                buf[numbytes] = '\0';
+                string listC(buf);
+                listUnranked = listUnranked + listC;
+                //printf("serverM: received '%s'\n", buf);
+
+                string finalRanking = getStats(listUnranked);
 
                 // SEND REQUESTED INFO MESSAGE TO CLIENT
-                if (send(new_fd1, "client A overall ranking", strlen("client A overall ranking"), 0) == -1)
+                if (send(new_fd1, finalRanking.c_str(), strlen(finalRanking.c_str()), 0) == -1)
                 {
                     perror("send");
                 }
-                printf("serverM: send '%s'\n", "client A overall ranking");
+                printf("The main server sent the statistics to client %s.\n", client.c_str());
             }
             // NO VALID COMMAND
             else

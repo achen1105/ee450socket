@@ -33,6 +33,7 @@ Received transfer status: The main server received the feedback from server <i> 
 Sent transfer result: The main server sent the result of the transaction to client <j>.
 TXLIST: A sorted list request from client <i> has been received.
 Generated TXLIST: The sorted file is up and ready.
+Generated stats: The main server sent the statistics to client <i>.
 
 SERVER A, B, C
 Booting up: The Server<i> is up and running using UDP on port <portnumber>.
@@ -53,8 +54,11 @@ Receive transfer result (one not in network): Unable to proceed with the transac
 Receive transfer result (both not in network): Unable to proceed with the transaction as <username1> and <username2> are not part of the network.
 Send TXLIST: Client <i> sent a sorted list request to the main server.
 Confirm list: Sorted list was generated.
+Send stats: <username> sent a statistics balance enquiry request to the main server.
+Receive stats: <username>'s statistics are the following: Rank--Username--NumofTransacions--Total
+<ranking>                        
 
-g) The 'stats' command is incomplete and returns a test message.
+g) After Client A ends, Client B must go next.  If Client A or Client B is started twice in a row instead of alternating, Server M stops listening for messages.
 
 h) I modified code from the following:
 1) insertion sort: https://www.geeksforgeeks.org/insertion-sort/
@@ -66,3 +70,7 @@ Found in structure of server M, A, B, C and client A, B
 Found in void writeTXLIST(string list, int size) from serverM
 4) Read in file line by line: https://www.cplusplus.com/doc/tutorial/files/
 Found in int checkWallet(string usrnme) from server A, B, C
+5) stoi function: https://stackoverflow.com/questions/19311641/c-string-to-int-without-using-atoi-or-stoi; https://www.geeksforgeeks.org/converting-strings-numbers-cc/
+Found in int stoint(string s) from server M, A, B, C, client A, B
+6) to_string function: https://stackoverflow.com/questions/4668760/converting-an-int-to-stdstring
+Found in string to_string(int x, int y) from server M, A, B, C, client A, B

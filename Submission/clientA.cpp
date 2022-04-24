@@ -1,5 +1,7 @@
 /*
 ** client.c -- a stream socket client demo
+FROM BEEJ https://beej.us/guide/bgnet/html/
+    ONLY REFERENCED THE STRUCTURE
 */
 
 #include <stdio.h>
@@ -183,7 +185,7 @@ int main(int argc, char *argv[])
     else if (argc == 3 && strcmp(argv[2],"stats") == 0)
     {
         // SEND MESSAGE TO SERVER
-        string username(argv[2]);
+        string username(argv[1]);
         string stmsg1 = "ST " + username;
         if (send(sockfd, stmsg1.c_str(), strlen(stmsg1.c_str()), 0) == -1)
         {
@@ -198,7 +200,7 @@ int main(int argc, char *argv[])
         }
         buf[numbytes] = '\0'; // ending null char
         //printf("clientA: received '%s'\n",buf);
-        printf("%s statistics are the following.:”Rank--Username--NumofTransacions--Total\n", argv[1]);
+        printf("%s's statistics are the following: Rank--Username--NumofTransacions--Total\n%s", argv[1], buf);
     }
     // TXCOINS CODE TC
     else if (argc == 4)
